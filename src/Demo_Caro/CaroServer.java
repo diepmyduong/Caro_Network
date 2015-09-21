@@ -57,16 +57,6 @@ public class CaroServer extends javax.swing.JFrame {
         new ListenChat();
         createBoard();
         
-        //Test
-        
-        JLabel messageLabel = new JLabel();
-        messageLabel.setText("Client :");
-        messageLabel.setForeground(Color.yellow);
-        messageLabel.setAlignmentX(LEFT_ALIGNMENT);
-        ScrollPaneChat.add(messageLabel);
-        ScrollPaneChat.validate();
-        ScrollPaneChat.repaint();
-        
     }
 //    Khởi tạo bàn cờ
     
@@ -372,23 +362,24 @@ public class CaroServer extends javax.swing.JFrame {
         
         private void clientChat(String message){
             JLabel messageLabel = new JLabel();
-            messageLabel.setText("Client : "+ message);
-            messageLabel.setForeground(Color.yellow);
-            messageLabel.setAlignmentX(LEFT_ALIGNMENT);
-            ScrollPaneChat.add(messageLabel);
-            ScrollPaneChat.validate();
-            ScrollPaneChat.repaint();
+            messageLabel.setText("Client : "+message);
+            messageLabel.setMaximumSize(new Dimension(ChatPanel.getWidth(),20));
+            messageLabel.setForeground(Color.DARK_GRAY);
+            ChatPanel.add(messageLabel);
+            ChatPanel.validate();
+            ChatPanel.repaint();
         }
         
         private void serverChat(String message){
             JLabel messageLabel = new JLabel();
-            messageLabel.setText(message + " : Server");
+            System.out.println(message);
+            messageLabel.setText("Server : "+message);
+            messageLabel.setMaximumSize(new Dimension(ChatPanel.getWidth(),20));
             messageLabel.setForeground(Color.BLUE);
-            messageLabel.setAlignmentX(RIGHT_ALIGNMENT);
-            ScrollPaneChat.add(messageLabel);
+            ChatPanel.add(messageLabel);
             System.out.println("message added...");
-            ScrollPaneChat.validate();
-            ScrollPaneChat.repaint();
+            ChatPanel.validate();
+            ChatPanel.repaint();
         }
         
         private void clientChatListen(){
@@ -505,16 +496,18 @@ public class CaroServer extends javax.swing.JFrame {
         ScrollPaneChat.setBackground(new java.awt.Color(0, 255, 204));
 
         ChatPanel.setLayout(new javax.swing.BoxLayout(ChatPanel, javax.swing.BoxLayout.PAGE_AXIS));
-
-        jLabel1.setText("jLabel1");
         ChatPanel.add(jLabel1);
 
         ScrollPaneChat.setViewportView(ChatPanel);
 
-        messageTextField.setText("Enter your Messages");
         messageTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 messageTextFieldActionPerformed(evt);
+            }
+        });
+        messageTextField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                messageTextFieldKeyPressed(evt);
             }
         });
 
@@ -558,7 +551,7 @@ public class CaroServer extends javax.swing.JFrame {
                 .addComponent(boardPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 554, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(ScrollPaneChat)
+                    .addComponent(ScrollPaneChat, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(messageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 245, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -630,6 +623,24 @@ public class CaroServer extends javax.swing.JFrame {
             Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_sendButtonMouseClicked
+
+    private void messageTextFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_messageTextFieldKeyPressed
+        // TODO add your handling code here:
+        if(evt.getKeyCode() == 10){
+            try {
+                // TODO add your handling code here:
+                String message = messageTextField.getText();
+                Hashtable values = new Hashtable();
+                values.put(Constant.MESSAGE, message);
+                outToChatClient.writeObject(values);
+                serverChat(message);
+                messageTextField.setText("");
+                messageTextField.requestFocusInWindow();
+            } catch (IOException ex) {
+                Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }//GEN-LAST:event_messageTextFieldKeyPressed
 
     /**
      * @param args the command line arguments

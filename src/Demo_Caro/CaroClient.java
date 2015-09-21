@@ -363,18 +363,23 @@ public class CaroClient extends javax.swing.JFrame {
         
         private void clientChat(String message){
             JLabel messageLabel = new JLabel();
-            messageLabel.setText("Client : "+ message);
-            messageLabel.setForeground(Color.yellow);
-            messageLabel.setAlignmentX(LEFT_ALIGNMENT);
+            messageLabel.setText("Client : "+message);
+            messageLabel.setMaximumSize(new Dimension(ChatPanel.getWidth(),20));
+            messageLabel.setForeground(Color.BLUE);
             ChatPanel.add(messageLabel);
+            ChatPanel.validate();
+            ChatPanel.repaint();
         }
         
         private void serverChat(String message){
             JLabel messageLabel = new JLabel();
-            messageLabel.setText(message + " : Server");
-            messageLabel.setForeground(Color.BLUE);
-            messageLabel.setAlignmentX(RIGHT_ALIGNMENT);
+            messageLabel.setText("Server : "+message);
+            messageLabel.setMaximumSize(new Dimension(ChatPanel.getWidth(),20));
+            messageLabel.setForeground(Color.DARK_GRAY);
             ChatPanel.add(messageLabel);
+            System.out.println("message added...");
+            ChatPanel.validate();
+            ChatPanel.repaint();
         }
         
         private void serverChatListen(){
@@ -439,7 +444,8 @@ public class CaroClient extends javax.swing.JFrame {
         boardPanel = new javax.swing.JPanel();
         clientPanel = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
-        ChatPanel = new javax.swing.JScrollPane();
+        ChatScrollPane = new javax.swing.JScrollPane();
+        ChatPanel = new javax.swing.JPanel();
         messageTextField = new javax.swing.JTextField();
         sendButton = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
@@ -471,12 +477,19 @@ public class CaroClient extends javax.swing.JFrame {
 
         jPanel1.setBackground(new java.awt.Color(255, 204, 51));
 
-        ChatPanel.setBackground(new java.awt.Color(0, 255, 204));
+        ChatScrollPane.setBackground(new java.awt.Color(0, 255, 204));
 
-        messageTextField.setText("Enter your Messages");
+        ChatPanel.setLayout(new javax.swing.BoxLayout(ChatPanel, javax.swing.BoxLayout.PAGE_AXIS));
+        ChatScrollPane.setViewportView(ChatPanel);
+
         messageTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 messageTextFieldActionPerformed(evt);
+            }
+        });
+        messageTextField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                messageTextFieldKeyPressed(evt);
             }
         });
 
@@ -520,7 +533,7 @@ public class CaroClient extends javax.swing.JFrame {
                 .addComponent(boardPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 554, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(ChatPanel)
+                    .addComponent(ChatScrollPane)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(messageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 245, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -539,7 +552,7 @@ public class CaroClient extends javax.swing.JFrame {
                     .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(clientPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(ChatPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 263, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(ChatScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 263, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(messageTextField)
@@ -585,10 +598,30 @@ public class CaroClient extends javax.swing.JFrame {
             values.put(Constant.MESSAGE, message);
             outToChatServer.writeObject(values);
             clientChat(message);
+            messageTextField.setText("");
+            messageTextField.requestFocusInWindow();
         } catch (IOException ex) {
             Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_sendButtonMouseClicked
+
+    private void messageTextFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_messageTextFieldKeyPressed
+        // TODO add your handling code here:
+        if(evt.getKeyCode() == 10){
+            try {
+                // TODO add your handling code here:
+                String message = messageTextField.getText();
+                Hashtable values = new Hashtable();
+                values.put(Constant.MESSAGE, message);
+                outToChatServer.writeObject(values);
+                clientChat(message);
+                messageTextField.setText("");
+                messageTextField.requestFocusInWindow();
+            } catch (IOException ex) {
+                Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }//GEN-LAST:event_messageTextFieldKeyPressed
 
     /**
      * @param args the command line arguments
@@ -627,7 +660,8 @@ public class CaroClient extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JScrollPane ChatPanel;
+    private javax.swing.JPanel ChatPanel;
+    private javax.swing.JScrollPane ChatScrollPane;
     private javax.swing.JPanel boardPanel;
     private javax.swing.JPanel clientPanel;
     private javax.swing.JMenuItem exitMenuItem;
