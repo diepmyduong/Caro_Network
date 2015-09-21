@@ -69,10 +69,14 @@ public class CaroClient extends javax.swing.JFrame {
             if(startUser){
                 //Được phép đi khi là người bắt đầu
                 user = true;
+                userAvatarLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Demo_Caro/assets/user-active.png")));
+                competitorAvatarLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Demo_Caro/assets/user.png"))); 
                 isClientPause = false;
                 isServerPause = true;
             }else{
                 user = false;
+                userAvatarLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Demo_Caro/assets/user.png")));
+                competitorAvatarLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Demo_Caro/assets/user-active.png"))); 
                 isClientPause = true;
                 isServerPause = false;
             }
@@ -141,6 +145,8 @@ public class CaroClient extends javax.swing.JFrame {
                //Chuyển lược đánh cho đối thủ
                isServerPause = false;
                user = false;
+               userAvatarLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Demo_Caro/assets/user.png")));
+               competitorAvatarLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Demo_Caro/assets/user-active.png"))); 
                System.out.println("Client Checked");
                //Gửi điểm đánh cho Server
                Hashtable values = new Hashtable();
@@ -173,6 +179,8 @@ public class CaroClient extends javax.swing.JFrame {
                //Chuyển lược đánh cho đối thủ
                isClientPause = false;
                user = true;
+               userAvatarLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Demo_Caro/assets/user-active.png")));
+               competitorAvatarLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Demo_Caro/assets/user.png"))); 
                System.out.println("Server Checked");
             }
         }
@@ -364,22 +372,22 @@ public class CaroClient extends javax.swing.JFrame {
         private void clientChat(String message){
             JLabel messageLabel = new JLabel();
             messageLabel.setText("Client : "+message);
-            messageLabel.setMaximumSize(new Dimension(ChatPanel.getWidth(),20));
+            messageLabel.setMaximumSize(new Dimension(chatPanel.getWidth(),20));
             messageLabel.setForeground(Color.BLUE);
-            ChatPanel.add(messageLabel);
-            ChatPanel.validate();
-            ChatPanel.repaint();
+            chatPanel.add(messageLabel);
+            chatPanel.validate();
+            chatPanel.repaint();
         }
         
         private void serverChat(String message){
             JLabel messageLabel = new JLabel();
             messageLabel.setText("Server : "+message);
-            messageLabel.setMaximumSize(new Dimension(ChatPanel.getWidth(),20));
+            messageLabel.setMaximumSize(new Dimension(chatPanel.getWidth(),20));
             messageLabel.setForeground(Color.DARK_GRAY);
-            ChatPanel.add(messageLabel);
+            chatPanel.add(messageLabel);
             System.out.println("message added...");
-            ChatPanel.validate();
-            ChatPanel.repaint();
+            chatPanel.validate();
+            chatPanel.repaint();
         }
         
         private void serverChatListen(){
@@ -440,12 +448,17 @@ public class CaroClient extends javax.swing.JFrame {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
         boardPanel = new javax.swing.JPanel();
-        clientPanel = new javax.swing.JPanel();
-        jPanel1 = new javax.swing.JPanel();
-        ChatScrollPane = new javax.swing.JScrollPane();
-        ChatPanel = new javax.swing.JPanel();
+        userPanel = new javax.swing.JPanel();
+        userAvatarLabel = new javax.swing.JLabel();
+        userNameLabel = new javax.swing.JLabel();
+        competitorPanel = new javax.swing.JPanel();
+        competitorNameLabel = new javax.swing.JLabel();
+        competitorAvatarLabel = new javax.swing.JLabel();
+        chatScrollPane = new javax.swing.JScrollPane();
+        chatPanel = new javax.swing.JPanel();
         messageTextField = new javax.swing.JTextField();
         sendButton = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
@@ -473,14 +486,36 @@ public class CaroClient extends javax.swing.JFrame {
         });
         boardPanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        clientPanel.setBackground(new java.awt.Color(153, 255, 51));
+        userPanel.setBackground(new java.awt.Color(153, 255, 51));
+        userPanel.setLayout(new java.awt.GridBagLayout());
 
-        jPanel1.setBackground(new java.awt.Color(255, 204, 51));
+        userAvatarLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Demo_Caro/assets/user.png"))); // NOI18N
+        userAvatarLabel.setMaximumSize(new java.awt.Dimension(128, 128));
+        userAvatarLabel.setPreferredSize(new java.awt.Dimension(128, 128));
+        userPanel.add(userAvatarLabel, new java.awt.GridBagConstraints());
 
-        ChatScrollPane.setBackground(new java.awt.Color(0, 255, 204));
+        userNameLabel.setText("User Name");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        userPanel.add(userNameLabel, gridBagConstraints);
 
-        ChatPanel.setLayout(new javax.swing.BoxLayout(ChatPanel, javax.swing.BoxLayout.PAGE_AXIS));
-        ChatScrollPane.setViewportView(ChatPanel);
+        competitorPanel.setBackground(new java.awt.Color(255, 204, 51));
+        competitorPanel.setLayout(new java.awt.GridBagLayout());
+
+        competitorNameLabel.setText("Competitor Name");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        competitorPanel.add(competitorNameLabel, gridBagConstraints);
+
+        competitorAvatarLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Demo_Caro/assets/user.png"))); // NOI18N
+        competitorPanel.add(competitorAvatarLabel, new java.awt.GridBagConstraints());
+
+        chatScrollPane.setBackground(new java.awt.Color(0, 255, 204));
+
+        chatPanel.setLayout(new javax.swing.BoxLayout(chatPanel, javax.swing.BoxLayout.PAGE_AXIS));
+        chatScrollPane.setViewportView(chatPanel);
 
         messageTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -533,26 +568,26 @@ public class CaroClient extends javax.swing.JFrame {
                 .addComponent(boardPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 554, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(ChatScrollPane)
+                    .addComponent(chatScrollPane)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(messageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 245, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(sendButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, 328, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(clientPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(userPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addComponent(competitorPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(boardPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 561, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(clientPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(competitorPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(userPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(ChatScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 263, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(chatScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 263, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(messageTextField)
@@ -660,19 +695,23 @@ public class CaroClient extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel ChatPanel;
-    private javax.swing.JScrollPane ChatScrollPane;
     private javax.swing.JPanel boardPanel;
-    private javax.swing.JPanel clientPanel;
+    private javax.swing.JPanel chatPanel;
+    private javax.swing.JScrollPane chatScrollPane;
+    private javax.swing.JLabel competitorAvatarLabel;
+    private javax.swing.JLabel competitorNameLabel;
+    private javax.swing.JPanel competitorPanel;
     private javax.swing.JMenuItem exitMenuItem;
     private javax.swing.JMenu fileMenu;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JMenuBar mainMenu;
     private javax.swing.JTextField messageTextField;
     private javax.swing.JButton replayButon;
     private javax.swing.JButton sendButton;
     private javax.swing.JButton stopButton;
+    private javax.swing.JLabel userAvatarLabel;
+    private javax.swing.JLabel userNameLabel;
+    private javax.swing.JPanel userPanel;
     // End of variables declaration//GEN-END:variables
     private Point currentPoint;
     private int currentCol, currentRow; // Tọa độ điểm chọn
