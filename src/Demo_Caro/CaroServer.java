@@ -7,6 +7,7 @@ package Demo_Caro;
 
 import javax.swing.JLabel;
 import java.awt.*;
+import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -33,6 +34,7 @@ public class CaroServer extends javax.swing.JFrame {
      */
     public CaroServer() {
         initComponents();
+        mls = boardPanel.getMouseListeners();
         class ListenGame extends Thread {
 
             public ListenGame() {
@@ -55,6 +57,7 @@ public class CaroServer extends javax.swing.JFrame {
         }
         new ListenGame();
         new ListenChat();
+        
         createBoard();
         
     }
@@ -368,6 +371,8 @@ public class CaroServer extends javax.swing.JFrame {
         return false;
         }
         
+        
+        //Hiển thị tin nhắn từ Client
         private void clientChat(String message){
             JLabel messageLabel = new JLabel();
             messageLabel.setText("Client : "+message);
@@ -378,6 +383,8 @@ public class CaroServer extends javax.swing.JFrame {
             chatPanel.repaint();
         }
         
+        
+        //Hiển thị tin nhắn từ Server
         private void serverChat(String message){
             JLabel messageLabel = new JLabel();
             System.out.println(message);
@@ -390,6 +397,7 @@ public class CaroServer extends javax.swing.JFrame {
             chatPanel.repaint();
         }
         
+        //Nhận thông tin chat từ client
         private void clientChatListen(){
             try{
                 System.out.println("Theard Chat Running....");
@@ -415,8 +423,11 @@ public class CaroServer extends javax.swing.JFrame {
             }
         }
         
+        //Nhận thông tin chơi game từ Client
         private void clientListen(){
             try{
+               //Dừng game lại khi chưa có kết nối nào
+                Pause();
                //Tạo Socket
                 System.out.println("Theard Running...");
                ServerSocket serverSocket = new ServerSocket(12345);
@@ -424,11 +435,13 @@ public class CaroServer extends javax.swing.JFrame {
                //Chấp nhận kết nối
                 clientSocket = serverSocket.accept();
                 System.out.println("Socket accept");
+                //Cho phép bắt đầu chơi
+                Play();
                 //Tạo luồng dữ liệu nhập xuất với Client
                 outToClient = new ObjectOutputStream(clientSocket.getOutputStream());
                 System.out.println("Streaming....");
                }catch(Exception e){
-                    System.out.println("Could not listen on port 4444");
+                    System.out.println("Could not listen");
                     System.exit(-1);
             }
             Hashtable values = new Hashtable();
@@ -442,11 +455,31 @@ public class CaroServer extends javax.swing.JFrame {
                     //Đọc dữ liệu được gửi lên từ Client
                     
                     values = (Hashtable)inFromClient.readObject();
+                    
+                    //Khi client đánh
                     if(values.containsKey(Constant.CLIENTCHECKED)){
                         System.out.println("Client Checking....");
                         clientCheck((Point)values.get(Constant.CLIENTPOINT));
                         
                     }
+                    //khi Client ngừng game
+                   if(values.containsKey(Constant.ISPAUSE)){
+                       //Nếu ngừng
+                       if((boolean)values.get(Constant.ISPAUSE)){
+                           Pause();
+                           
+                           stopButton.setSelected(true);
+                           stopButton.setEnabled(false);
+                           JOptionPane.showMessageDialog(this, "Đối thủ yêu cầu tạm dừng");
+                       }else{
+                           //Nếu chơi lại
+                           Play();
+                           stopButton.setSelected(false);
+                           stopButton.setEnabled(true);
+                       }
+                   }
+                    
+                    
                 } catch (IOException ex) {
                     Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (ClassNotFoundException ex) {
@@ -478,7 +511,7 @@ public class CaroServer extends javax.swing.JFrame {
         sendButton = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         replayButon = new javax.swing.JButton();
-        stopButton = new javax.swing.JButton();
+        stopButton = new javax.swing.JToggleButton();
         mainMenu = new javax.swing.JMenuBar();
         fileMenu = new javax.swing.JMenu();
         exitMenuItem = new javax.swing.JMenuItem();
@@ -555,6 +588,11 @@ public class CaroServer extends javax.swing.JFrame {
         jPanel2.add(replayButon);
 
         stopButton.setText("Stop");
+        stopButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                stopButtonActionPerformed(evt);
+            }
+        });
         jPanel2.add(stopButton);
 
         mainMenu.setMaximumSize(new java.awt.Dimension(78, 32769));
@@ -640,10 +678,14 @@ public class CaroServer extends javax.swing.JFrame {
         try {
             // TODO add your handling code here:
             System.out.println("Send Clicked...");
+            //Lấy tin nhắn
             String message = messageTextField.getText();
+            //Đóng gói tin nhắn 
             Hashtable values = new Hashtable();
             values.put(Constant.MESSAGE, message);
+            //Gửi đi cho Client
             outToChatClient.writeObject(values);
+            //Hiển thị tin nhắn vừa nhập
             serverChat(message);
         } catch (IOException ex) {
             Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
@@ -655,10 +697,14 @@ public class CaroServer extends javax.swing.JFrame {
         if(evt.getKeyCode() == 10){
             try {
                 // TODO add your handling code here:
+                //Lấy tin nhắn
                 String message = messageTextField.getText();
+                //Đóng gói
                 Hashtable values = new Hashtable();
                 values.put(Constant.MESSAGE, message);
+                //Gửi đi cho client
                 outToChatClient.writeObject(values);
+                //Hiển thị
                 serverChat(message);
                 messageTextField.setText("");
                 messageTextField.requestFocusInWindow();
@@ -668,6 +714,84 @@ public class CaroServer extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_messageTextFieldKeyPressed
 
+    private Runnable pausingRunable(){
+        return new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("Pausing...");
+                int time = 60; // 60 giây
+                try {
+                 while(time > 0){
+                        stopButton.setText(time+"s");
+                         Thread.sleep(950);
+                         time--;
+                 }
+                 Play();
+                 Hashtable values = new Hashtable();
+                 values.put(Constant.ISPAUSE, false);
+                 outToClient.writeObject(values);
+
+                 stopButton.setSelected(false);
+                 stopButton.setText("Stop");
+                } catch (InterruptedException ex) {
+                        Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (IOException ex) {
+                    Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        };
+    }
+    
+    private void stopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionPerformed
+        // TODO add your handling code here:
+        if(stopButton.isSelected()){
+            try {
+                System.out.println("Pause....");
+                //Thông báo ngừng đến Server
+                Hashtable values = new Hashtable();
+                values.put(Constant.ISPAUSE, true);
+                outToClient.writeObject(values);
+                //Dừng game lại
+                Pause();
+                //Chỉ được tạm dựng 1 phút
+                pausing = new Thread(pausingRunable());
+                pausing.start();
+            } catch (IOException ex) {
+                Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+        }else{
+            try {
+                System.out.println("Start....");
+                //Thông báo ngừng đến Server
+                Hashtable values = new Hashtable();
+                values.put(Constant.ISPAUSE, false);
+                outToClient.writeObject(values);
+                //Dừng game lại
+                Play();
+            } catch (IOException ex) {
+                Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }//GEN-LAST:event_stopButtonActionPerformed
+
+    //Tạm dừng game lại
+    //Xóa listenr của board
+    private void Pause(){
+        for(MouseListener ml : mls){
+            boardPanel.removeMouseListener(ml);
+        }
+    }
+    
+    //Chạy game lại
+    //add listener lại cho board
+    private void Play(){
+        for(MouseListener ml : mls){
+            boardPanel.addMouseListener(ml);
+        }
+    }
+    
+    
     /**
      * @param args the command line arguments
      */
@@ -720,7 +844,7 @@ public class CaroServer extends javax.swing.JFrame {
     private javax.swing.JTextField messageTextField;
     private javax.swing.JButton replayButon;
     private javax.swing.JButton sendButton;
-    private javax.swing.JButton stopButton;
+    private javax.swing.JToggleButton stopButton;
     private javax.swing.JLabel userAvatarLabel;
     private javax.swing.JLabel userNameLabel;
     private javax.swing.JPanel userPanel;
@@ -743,4 +867,7 @@ public class CaroServer extends javax.swing.JFrame {
     private ObjectOutputStream outToClient;
     private ObjectOutputStream outToChatClient;
     private ObjectInputStream inFromChatClient;
+    private MouseListener[] mls; // Sự kiện click chuột chủa board
+    private Thread pausing; //Khoảng thời gian được phép ngừng ngừng
+    private Thread nextPause; //Khoảng thời gian cho lần ngừng sau
 }
