@@ -18,5 +18,7 @@ public class Constant {
     public static final String ISCLIENTWIN = "isclientwin";
     public static final String MESSAGE = "message";
     public static final String ISPAUSE = "ispause";
+    public static final String REQUESTREPLAY = "requestreplay";
+    public static final String REPONSEREPLAY = "reponsereplay";
     
 }

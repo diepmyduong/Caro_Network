@@ -58,7 +58,7 @@
               <Component id="boardPanel" min="-2" pref="554" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="chatCcrollPane" alignment="0" pref="0" max="32767" attributes="0"/>
+                  <Component id="chatScrollPane" alignment="0" pref="0" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="messageTextField" min="-2" pref="245" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
@@ -83,7 +83,7 @@
                   <Component id="userPanel" alignment="0" min="-2" pref="160" max="-2" attributes="0"/>
               </Group>
               <EmptySpace min="-2" max="-2" attributes="0"/>
-              <Component id="chatCcrollPane" max="32767" attributes="0"/>
+              <Component id="chatScrollPane" max="32767" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                   <Component id="messageTextField" max="32767" attributes="0"/>
@@ -173,11 +173,14 @@
         </Component>
       </SubComponents>
     </Container>
-    <Container class="javax.swing.JScrollPane" name="chatCcrollPane">
+    <Container class="javax.swing.JScrollPane" name="chatScrollPane">
       <Properties>
         <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
           <Color blue="cc" green="ff" red="0" type="rgb"/>
         </Property>
+        <Property name="horizontalScrollBarPolicy" type="int" value="31"/>
+        <Property name="toolTipText" type="java.lang.String" value=""/>
+        <Property name="verticalScrollBarPolicy" type="int" value="22"/>
       </Properties>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
@@ -185,7 +188,7 @@
         <Container class="javax.swing.JPanel" name="chatPanel">
 
           <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBoxLayout">
-            <Property name="axis" type="int" value="3"/>
+            <Property name="axis" type="int" value="1"/>
           </Layout>
         </Container>
       </SubComponents>
@@ -216,7 +219,7 @@
             <Property name="text" type="java.lang.String" value="Replay"/>
           </Properties>
           <Events>
-            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="replayButonMouseClicked"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="replayButonActionPerformed"/>
           </Events>
         </Component>
         <Component class="javax.swing.JToggleButton" name="stopButton">

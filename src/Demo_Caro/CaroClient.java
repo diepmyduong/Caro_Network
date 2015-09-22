@@ -59,6 +59,7 @@ public class CaroClient extends javax.swing.JFrame {
         new ListenGame();
         new ListenChat();
         createBoard();
+        scrollBar = chatScrollPane.getVerticalScrollBar();
     }
 //    Khởi tạo bàn cờ
     
@@ -371,25 +372,49 @@ public class CaroClient extends javax.swing.JFrame {
         return false;
         }
         
+        //Hiển thị tin nhắn từ Client
         private void clientChat(String message){
             JLabel messageLabel = new JLabel();
             messageLabel.setText("Client : "+message);
             messageLabel.setMaximumSize(new Dimension(chatPanel.getWidth(),20));
+            messageLabel.setMinimumSize(new Dimension(chatPanel.getWidth(),20));
             messageLabel.setForeground(Color.BLUE);
             chatPanel.add(messageLabel);
             chatPanel.validate();
-            chatPanel.repaint();
+            chatScrollPane.validate();
+            scrollBar.setValue(scrollBar.getMaximum());
         }
         
+        
+        //Hiển thị tin nhắn từ Server
         private void serverChat(String message){
             JLabel messageLabel = new JLabel();
+            System.out.println(message);
             messageLabel.setText("Server : "+message);
             messageLabel.setMaximumSize(new Dimension(chatPanel.getWidth(),20));
+            messageLabel.setMinimumSize(new Dimension(chatPanel.getWidth(),20));
             messageLabel.setForeground(Color.DARK_GRAY);
             chatPanel.add(messageLabel);
             System.out.println("message added...");
             chatPanel.validate();
-            chatPanel.repaint();
+            chatScrollPane.validate();
+            scrollBar.setValue(scrollBar.getMaximum());
+        }
+        
+        //Hiển thị thông báo 
+        private void alertMessage(String message){
+            JLabel messageLabel = new JLabel();
+            System.out.println(message);
+            messageLabel.setText("Alert : "+message);
+            messageLabel.setMaximumSize(new Dimension(chatPanel.getWidth(),20));
+            messageLabel.setMinimumSize(new Dimension(chatPanel.getWidth(),20));
+            messageLabel.setForeground(Color.RED);
+//            chatScrollPane.setViewportView(messageLabel);
+            chatPanel.add(messageLabel);
+            System.out.println("message added...");
+            chatPanel.validate();
+            chatScrollPane.validate();
+            scrollBar.setValue(scrollBar.getMaximum());
         }
         
         private void serverChatListen(){
@@ -458,6 +483,40 @@ public class CaroClient extends javax.swing.JFrame {
                            stopButton.setEnabled(true);
                        }
                    }
+                   //Server trả lời yêu cầu chơi lại 
+                   if(values.containsKey(Constant.REPONSEREPLAY)){
+                       if((boolean)values.get(Constant.REPONSEREPLAY)){
+                           //Nếu người dùng đồng ý thì chơi lại và bạn thua
+                           alertMessage("Chơi lại....");
+                           closeUser = true; //Bạn thua
+                           repaintBoard(); // Tạo lại bàn cờ
+                       }else{
+                           //Nếu người dùng không đồng ý chơi lại
+                           alertMessage("Đối thủ từ chối....");
+                       }
+                   }
+                   //Nếu server yêu cầu chơi lại
+                   if(values.containsKey(Constant.REQUESTREPLAY)){
+                       //Hiển thị thông báo nhận yêu cầu từ Server
+                       int dialogResult = JOptionPane.showConfirmDialog (this, "Đối thủ yêu cầu chơi lại! \n Bạn có đồng ý chơi lại không?","Warning",JOptionPane.YES_NO_OPTION);
+                       if(dialogResult == JOptionPane.YES_OPTION){
+                           //Nếu đồng ý thì sẽ tạo lại bàn cờ và là người thắng cuộc
+                           //Gửi thông báo cho Server là bạn đồng ý
+                           Hashtable messages = new Hashtable();
+                           messages.put(Constant.REPONSEREPLAY,true);
+                           outToChatServer.writeObject(messages);
+                           //Tạo lại bạn chơi
+                           closeUser = false; // Bạn thắng
+                           repaintBoard();
+                           
+                       }else{
+                           //Nếu bạn không đồng ý thì tiếp tục chơi
+                           //Gửi thông báo cho server là bạn không đồng ý
+                           Hashtable messages = new Hashtable();
+                           messages.put(Constant.REPONSEREPLAY,false);
+                           outToChatServer.writeObject(messages);
+                       }
+                   }
                }
             }catch(Exception e){
                 
@@ -513,8 +572,6 @@ public class CaroClient extends javax.swing.JFrame {
         userPanel.setLayout(new java.awt.GridBagLayout());
 
         userAvatarLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Demo_Caro/assets/user.png"))); // NOI18N
-        userAvatarLabel.setMaximumSize(new java.awt.Dimension(128, 128));
-        userAvatarLabel.setPreferredSize(new java.awt.Dimension(128, 128));
         userPanel.add(userAvatarLabel, new java.awt.GridBagConstraints());
 
         userNameLabel.setText("User Name");
@@ -536,6 +593,8 @@ public class CaroClient extends javax.swing.JFrame {
         competitorPanel.add(competitorAvatarLabel, new java.awt.GridBagConstraints());
 
         chatScrollPane.setBackground(new java.awt.Color(0, 255, 204));
+        chatScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        chatScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
         chatPanel.setLayout(new javax.swing.BoxLayout(chatPanel, javax.swing.BoxLayout.PAGE_AXIS));
         chatScrollPane.setViewportView(chatPanel);
@@ -564,6 +623,11 @@ public class CaroClient extends javax.swing.JFrame {
         replayButon.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 replayButonMouseClicked(evt);
+            }
+        });
+        replayButon.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                replayButonActionPerformed(evt);
             }
         });
         jPanel2.add(replayButon);
@@ -702,10 +766,69 @@ public class CaroClient extends javax.swing.JFrame {
         }
     }
     
+    private Runnable pausingRunable(){
+        return new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("Pausing...");
+                int time = 60; // 60 giây
+                try {
+                 while(time > 0){
+                        stopButton.setText(time+"s");
+                         Thread.sleep(950);
+                         time--;
+                 }
+                 
+                 Play();
+                 Hashtable values = new Hashtable();
+                 values.put(Constant.ISPAUSE, false);
+                 outToServer.writeObject(values);
+
+                 stopButton.setSelected(false);
+                 stopButton.setText("Stop");
+                 waitNextPause = new Thread(waitNextPauseRunnable());
+                 waitNextPause.start();
+                } catch (InterruptedException ex) {
+                        Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (IOException ex) {
+                    Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        };
+    }
+    
+    //Khoảng thời gian chờ cho lần dừng tiếp theo
+    private Runnable waitNextPauseRunnable(){
+        return new Runnable() {
+
+            @Override
+            public void run() {
+                int time = 120; // Khoảng thời gian cho lần ngừng tiếp 
+                try {
+                 while(time > 0){
+                    
+                        nextPause = time;
+                        Thread.sleep(950);
+                        time--;
+                 }
+                } catch (InterruptedException ex) {
+                       Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
+                   }
+                 waitNextPause = null;
+            }
+        };
+    }
+    
     private void stopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionPerformed
         // TODO add your handling code here:
         if(stopButton.isSelected()){
             try {
+                //Nếu chưa được phép ngừng tiếp
+                if(waitNextPause != null){
+                    alertMessage("Không được phép tạm dừng. Thời gian chờ là "+nextPause+"s");
+                    stopButton.setSelected(false);
+                    return;
+                }
                 System.out.println("Pause....");
                 //Thông báo ngừng đến Server
                 Hashtable values = new Hashtable();
@@ -713,23 +836,51 @@ public class CaroClient extends javax.swing.JFrame {
                 outToServer.writeObject(values);
                 //Dừng game lại
                 Pause();
+                //Chỉ được tạm dựng 1 phút
+                pausing = new Thread(pausingRunable());
+                pausing.start();
             } catch (IOException ex) {
-                Logger.getLogger(CaroClient.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
             }
             
         }else{
             try {
+                
                 System.out.println("Start....");
-                //Thông báo chơi lại đến Server
+                
+                //Thông báo chơi lại đến Client
                 Hashtable values = new Hashtable();
-                values.put(Constant.ISPAUSE,false);
+                values.put(Constant.ISPAUSE, false);
                 outToServer.writeObject(values);
+                //Chơi game lại
                 Play();
+                pausing.stop();
+                pausing = null;
+                stopButton.setSelected(false);
+                stopButton.setText("Stop");
+                waitNextPause = new Thread(waitNextPauseRunnable());
+                waitNextPause.start();
             } catch (IOException ex) {
-                Logger.getLogger(CaroClient.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }//GEN-LAST:event_stopButtonActionPerformed
+
+    private void replayButonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_replayButonActionPerformed
+        // TODO add your handling code here:
+        try {
+            // TODO add your handling code here:
+            //Để nghị chơi lại
+            //Gửi yêu cầu cho client
+            Hashtable values = new Hashtable();
+            values.put(Constant.REQUESTREPLAY, true);
+            outToServer.writeObject(values);
+            //Thông báo đang đợi trả lời
+            alertMessage("Đang đợi đối thủ chấp nhận....");
+        } catch (IOException ex) {
+            Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_replayButonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -805,4 +956,8 @@ public class CaroClient extends javax.swing.JFrame {
     private ObjectOutputStream outToChatServer;
     private ObjectInputStream inFromChatServer;
     private MouseListener[] mls; // Sự kiện click chuột chủa board
+    private Thread pausing; //Khoảng thời gian được phép ngừng ngừng
+    private Thread waitNextPause; 
+    private int nextPause; //Khoảng thời gian cho lần ngừng sau
+    private JScrollBar scrollBar;
 }
