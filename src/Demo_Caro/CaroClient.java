@@ -98,6 +98,8 @@ public class CaroClient extends javax.swing.JFrame {
                 isClientPause = true;
                 isServerPause = false;
             }
+            waitNextReplay = null; //Được phép chơi lại
+            waitNextPause = null; //Được phép dừng
             cellSize = boardPanel.getWidth()/boardSize; // lấy kích thước của 1 ô
             int x = 0, y = 0; //Tọa độ bắt đầu từ 0
             for(int i = 0; i < boardSize; i++){
@@ -425,6 +427,7 @@ public class CaroClient extends javax.swing.JFrame {
             chatScrollPane.validate();
         }
         
+        //Nhận thông tin chat từ Server
         private void serverChatListen(){
             try{
                 clientChatSocket = new Socket("adminpc",6789);
@@ -446,6 +449,7 @@ public class CaroClient extends javax.swing.JFrame {
             }
         }
         
+        //Nhận thông tin từ Server
         private void serverListen(){
             try{
                //Tạo Socket
@@ -497,6 +501,7 @@ public class CaroClient extends javax.swing.JFrame {
                            //Nếu người dùng đồng ý thì chơi lại và bạn thua
                            alertMessage("Chơi lại....");
                            closeUser = true; //Bạn thua
+                           waitNextReplay.stop();
                            repaintBoard(); // Tạo lại bàn cờ
                        }else{
                            //Nếu người dùng không đồng ý chơi lại
@@ -524,6 +529,12 @@ public class CaroClient extends javax.swing.JFrame {
                            messages.put(Constant.REPONSEREPLAY,false);
                            outToServer.writeObject(messages);
                        }
+                   }
+                   
+                   //Nếu server thoát trò chơi
+                   if(values.containsKey(Constant.ISEXIT)){
+                       JOptionPane.showMessageDialog(this, "Đối thủ đã thoát khỏi game");
+                       System.exit(0);
                    }
                }
             }catch(Exception e){
@@ -654,6 +665,11 @@ public class CaroClient extends javax.swing.JFrame {
         fileMenu.setText("File");
 
         exitMenuItem.setText("Exit");
+        exitMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                exitMenuItemActionPerformed(evt);
+            }
+        });
         fileMenu.add(exitMenuItem);
 
         mainMenu.add(fileMenu);
@@ -701,7 +717,7 @@ public class CaroClient extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void exitForm(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_exitForm
-        System.exit(0);
+        userExit();
     }//GEN-LAST:event_exitForm
 
     private void messageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_messageTextFieldActionPerformed
@@ -731,7 +747,9 @@ public class CaroClient extends javax.swing.JFrame {
             String message = messageTextField.getText();
             Hashtable values = new Hashtable();
             values.put(Constant.MESSAGE, message);
-            outToChatServer.writeObject(values);
+            if(outToChatServer != null){
+                outToChatServer.writeObject(values);
+            }
             clientChat(message);
             messageTextField.setText("");
             messageTextField.requestFocusInWindow();
@@ -748,7 +766,9 @@ public class CaroClient extends javax.swing.JFrame {
                 String message = messageTextField.getText();
                 Hashtable values = new Hashtable();
                 values.put(Constant.MESSAGE, message);
-                outToChatServer.writeObject(values);
+                if(outToChatServer != null){
+                    outToChatServer.writeObject(values);
+                }
                 clientChat(message);
                 messageTextField.setText("");
                 messageTextField.requestFocusInWindow();
@@ -826,11 +846,35 @@ public class CaroClient extends javax.swing.JFrame {
             }
         };
     }
-    
+    //Khoảng thời gian chờ cho lần chơi lại tiếp theo
+    private Runnable waitNextReplayRunnable(){
+        return new Runnable() {
+
+            @Override
+            public void run() {
+                int time = 60; // Khoảng thời gian cho lần ngừng tiếp 
+                try {
+                 while(time > 0){
+                        nextReplay = time;
+                        Thread.sleep(950);
+                        time--;
+                 }
+                } catch (InterruptedException ex) {
+                       Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
+                   }
+                 waitNextReplay = null;
+            }
+        };
+    }
     private void stopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionPerformed
         // TODO add your handling code here:
         if(stopButton.isSelected()){
             try {
+                //Nếu chưa có kết nối
+                if(outToServer == null){
+                    stopButton.setSelected(false);
+                    return;
+                }
                 //Nếu chưa được phép ngừng tiếp
                 if(waitNextPause != null){
                     alertMessage("Không được phép tạm dừng. Thời gian chờ là "+nextPause+"s");
@@ -877,6 +921,14 @@ public class CaroClient extends javax.swing.JFrame {
     private void replayButonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_replayButonActionPerformed
         // TODO add your handling code here:
         try {
+            if(outToServer == null){
+                return;
+            }
+            //Nếu chưa hết thơi gian chờ để yêu cầu chơi lại
+            if(waitNextReplay != null){
+                alertMessage("Không thể yêu cầu chơi lại trong khoảng thời gian ngắn. Thời gian chờ là "+nextReplay+"s");
+                return;
+            }
             // TODO add your handling code here:
             //Để nghị chơi lại
             //Gửi yêu cầu cho client
@@ -885,11 +937,35 @@ public class CaroClient extends javax.swing.JFrame {
             outToServer.writeObject(values);
             //Thông báo đang đợi trả lời
             alertMessage("Đang đợi đối thủ chấp nhận....");
+            waitNextReplay = new Thread(waitNextReplayRunnable());
+            waitNextReplay.start();
         } catch (IOException ex) {
             Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_replayButonActionPerformed
 
+    private void exitMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitMenuItemActionPerformed
+        // TODO add your handling code here:
+        userExit();
+    }//GEN-LAST:event_exitMenuItemActionPerformed
+    
+    private void userExit(){
+        int dialogResult = JOptionPane.showConfirmDialog (this, "Bạn có chắc là muốn thoát chứ?","Warning",JOptionPane.YES_NO_OPTION);
+        if(dialogResult == JOptionPane.YES_OPTION){
+            if(outToServer != null){
+                try {
+                    Hashtable values = new Hashtable();
+                    values.put(Constant.ISEXIT, true);
+                    outToServer.writeObject(values);
+                    outToChatServer.writeObject(values);
+                } catch (IOException ex) {
+                    Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            System.exit(0);
+        }
+    }
+    
     /**
      * @param args the command line arguments
      */
@@ -966,7 +1042,9 @@ public class CaroClient extends javax.swing.JFrame {
     private MouseListener[] mls; // Sự kiện click chuột chủa board
     private Thread pausing; //Khoảng thời gian được phép ngừng ngừng
     private Thread waitNextPause; 
+    private Thread waitNextReplay;
     private int nextPause; //Khoảng thời gian cho lần ngừng sau
+    private int nextReplay; //Khoảng thời gian cho lần chơi lại tiếp theo
     private StyledDocument docChat; //Nội dung khung chat
     private JScrollBar scrollBar;
     private SimpleAttributeSet clientKeyWord = new SimpleAttributeSet(); // Kiểu chữ của client
