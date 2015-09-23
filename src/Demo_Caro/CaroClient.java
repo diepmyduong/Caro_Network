@@ -22,6 +22,10 @@ import java.util.logging.Logger;
 import javax.swing.*;
 import javax.swing.JPanel;
 import javax.swing.ImageIcon;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 
 /**
  *
@@ -35,6 +39,7 @@ public class CaroClient extends javax.swing.JFrame {
     public CaroClient() {
         initComponents();
         mls = boardPanel.getMouseListeners();
+        setKeyWord(); // Cấu hình text cho khung chat
         class ListenGame extends Thread {
 
             public ListenGame() {
@@ -60,6 +65,16 @@ public class CaroClient extends javax.swing.JFrame {
         new ListenChat();
         createBoard();
         scrollBar = chatScrollPane.getVerticalScrollBar();
+    }
+    //Cấu hình text cho khung chat 
+    private void setKeyWord(){
+        //client chữ xám
+        StyleConstants.setForeground(clientKeyWord, Color.BLUE);
+        //server chữ xanh
+        StyleConstants.setForeground(serverKeyWord, Color.DARK_GRAY);
+        //thông báo chữ đỏ
+        StyleConstants.setForeground(alertKeyWord, Color.RED);
+        StyleConstants.setBold(alertKeyWord, true);
     }
 //    Khởi tạo bàn cờ
     
@@ -374,47 +389,40 @@ public class CaroClient extends javax.swing.JFrame {
         
         //Hiển thị tin nhắn từ Client
         private void clientChat(String message){
-            JLabel messageLabel = new JLabel();
-            messageLabel.setText("Client : "+message);
-            messageLabel.setMaximumSize(new Dimension(chatPanel.getWidth(),20));
-            messageLabel.setMinimumSize(new Dimension(chatPanel.getWidth(),20));
-            messageLabel.setForeground(Color.BLUE);
-            chatPanel.add(messageLabel);
-            chatPanel.validate();
-            chatScrollPane.validate();
+            docChat = chatPanel.getStyledDocument();
+            try {
+                docChat.insertString(docChat.getLength(),"Client :"+message+"\n", clientKeyWord);
+            } catch (BadLocationException ex) {
+                Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
+            }
             scrollBar.setValue(scrollBar.getMaximum());
+            chatScrollPane.validate();
         }
         
         
         //Hiển thị tin nhắn từ Server
         private void serverChat(String message){
-            JLabel messageLabel = new JLabel();
-            System.out.println(message);
-            messageLabel.setText("Server : "+message);
-            messageLabel.setMaximumSize(new Dimension(chatPanel.getWidth(),20));
-            messageLabel.setMinimumSize(new Dimension(chatPanel.getWidth(),20));
-            messageLabel.setForeground(Color.DARK_GRAY);
-            chatPanel.add(messageLabel);
-            System.out.println("message added...");
-            chatPanel.validate();
-            chatScrollPane.validate();
+            docChat = chatPanel.getStyledDocument();
+            try {
+                docChat.insertString(docChat.getLength(),"Server :"+message+"\n", serverKeyWord);
+            } catch (BadLocationException ex) {
+                Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
+            }
             scrollBar.setValue(scrollBar.getMaximum());
+            chatScrollPane.validate();
+            
         }
         
         //Hiển thị thông báo 
         private void alertMessage(String message){
-            JLabel messageLabel = new JLabel();
-            System.out.println(message);
-            messageLabel.setText("Alert : "+message);
-            messageLabel.setMaximumSize(new Dimension(chatPanel.getWidth(),20));
-            messageLabel.setMinimumSize(new Dimension(chatPanel.getWidth(),20));
-            messageLabel.setForeground(Color.RED);
-//            chatScrollPane.setViewportView(messageLabel);
-            chatPanel.add(messageLabel);
-            System.out.println("message added...");
-            chatPanel.validate();
-            chatScrollPane.validate();
+            docChat = chatPanel.getStyledDocument();
+            try {
+                docChat.insertString(docChat.getLength(),"Alert :"+message+"\n", alertKeyWord);
+            } catch (BadLocationException ex) {
+                Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
+            }
             scrollBar.setValue(scrollBar.getMaximum());
+            chatScrollPane.validate();
         }
         
         private void serverChatListen(){
@@ -504,7 +512,7 @@ public class CaroClient extends javax.swing.JFrame {
                            //Gửi thông báo cho Server là bạn đồng ý
                            Hashtable messages = new Hashtable();
                            messages.put(Constant.REPONSEREPLAY,true);
-                           outToChatServer.writeObject(messages);
+                           outToServer.writeObject(messages);
                            //Tạo lại bạn chơi
                            closeUser = false; // Bạn thắng
                            repaintBoard();
@@ -514,7 +522,7 @@ public class CaroClient extends javax.swing.JFrame {
                            //Gửi thông báo cho server là bạn không đồng ý
                            Hashtable messages = new Hashtable();
                            messages.put(Constant.REPONSEREPLAY,false);
-                           outToChatServer.writeObject(messages);
+                           outToServer.writeObject(messages);
                        }
                    }
                }
@@ -540,7 +548,7 @@ public class CaroClient extends javax.swing.JFrame {
         competitorNameLabel = new javax.swing.JLabel();
         competitorAvatarLabel = new javax.swing.JLabel();
         chatScrollPane = new javax.swing.JScrollPane();
-        chatPanel = new javax.swing.JPanel();
+        chatPanel = new javax.swing.JTextPane();
         messageTextField = new javax.swing.JTextField();
         sendButton = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
@@ -596,7 +604,7 @@ public class CaroClient extends javax.swing.JFrame {
         chatScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         chatScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
-        chatPanel.setLayout(new javax.swing.BoxLayout(chatPanel, javax.swing.BoxLayout.PAGE_AXIS));
+        chatPanel.setEditable(false);
         chatScrollPane.setViewportView(chatPanel);
 
         messageTextField.addActionListener(new java.awt.event.ActionListener() {
@@ -893,7 +901,7 @@ public class CaroClient extends javax.swing.JFrame {
          */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
+                if ("Windows".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
                 }
@@ -920,7 +928,7 @@ public class CaroClient extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel boardPanel;
-    private javax.swing.JPanel chatPanel;
+    private javax.swing.JTextPane chatPanel;
     private javax.swing.JScrollPane chatScrollPane;
     private javax.swing.JLabel competitorAvatarLabel;
     private javax.swing.JLabel competitorNameLabel;
@@ -959,5 +967,9 @@ public class CaroClient extends javax.swing.JFrame {
     private Thread pausing; //Khoảng thời gian được phép ngừng ngừng
     private Thread waitNextPause; 
     private int nextPause; //Khoảng thời gian cho lần ngừng sau
+    private StyledDocument docChat; //Nội dung khung chat
     private JScrollBar scrollBar;
+    private SimpleAttributeSet clientKeyWord = new SimpleAttributeSet(); // Kiểu chữ của client
+    private SimpleAttributeSet serverKeyWord = new SimpleAttributeSet(); // Kiểu chữ của server
+    private SimpleAttributeSet alertKeyWord = new SimpleAttributeSet(); // Kiểu chữ của hệ thống thông báo
 }
