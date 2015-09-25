@@ -29,7 +29,7 @@ public class Login extends javax.swing.JFrame {
         try {
             //tạo socket
             System.out.println("Kết nối server...");
-            Socket loginSocket = new Socket("192.168.1.36",8888);
+            Socket loginSocket = new Socket("adminpc",8888);
             //tạo luồng dữ liệu nhâp xuất
             System.out.println("Gửi thông tin đăng nhập");
             outToSever = new ObjectOutputStream(loginSocket.getOutputStream());

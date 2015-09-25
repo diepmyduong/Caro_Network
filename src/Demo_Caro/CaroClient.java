@@ -36,8 +36,14 @@ public class CaroClient extends javax.swing.JFrame {
     /**
      * Creates new form CaroFrame
      */
-    public CaroClient() {
+    public CaroClient(String ip, int port) {
         initComponents();
+        gamePort = port;
+        chatPort = port+1;
+        serverIP = ip;
+        System.out.println(ip);
+        System.out.println(gamePort);
+        System.out.println(chatPort);
         mls = boardPanel.getMouseListeners();
         setKeyWord(); // Cấu hình text cho khung chat
         class ListenGame extends Thread {
@@ -430,7 +436,8 @@ public class CaroClient extends javax.swing.JFrame {
         //Nhận thông tin chat từ Server
         private void serverChatListen(){
             try{
-                clientChatSocket = new Socket("adminpc",6789);
+                System.out.println("Kết nối với server "+serverIP+":"+chatPort);
+                clientChatSocket = new Socket(serverIP,chatPort);
                 
                 //Tao luồng dữ liệu nhập xuất với Server
                 outToChatServer = new ObjectOutputStream(clientChatSocket.getOutputStream());
@@ -453,7 +460,8 @@ public class CaroClient extends javax.swing.JFrame {
         private void serverListen(){
             try{
                //Tạo Socket
-               clientSocket = new Socket("adminpc",12345);
+                System.out.println("Kết nối với server "+serverIP+":"+gamePort);
+               clientSocket = new Socket(serverIP,gamePort);
                
                //Tạo luồng Nhập và luồng xuất gắn với Socket
                inFromServer = new ObjectInputStream(clientSocket.getInputStream());
@@ -997,7 +1005,7 @@ public class CaroClient extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new CaroClient().setVisible(true);
+//                new CaroClient().setVisible(true);
             }
         });
     }
@@ -1050,4 +1058,7 @@ public class CaroClient extends javax.swing.JFrame {
     private SimpleAttributeSet clientKeyWord = new SimpleAttributeSet(); // Kiểu chữ của client
     private SimpleAttributeSet serverKeyWord = new SimpleAttributeSet(); // Kiểu chữ của server
     private SimpleAttributeSet alertKeyWord = new SimpleAttributeSet(); // Kiểu chữ của hệ thống thông báo
+    private int gamePort;
+    private int chatPort;
+    private String serverIP;
 }

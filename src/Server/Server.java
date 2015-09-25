@@ -5,10 +5,13 @@
  */
 package Server;
 
+import Demo_Caro.Room;
 import com.sun.corba.se.impl.io.InputStreamHook;
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -37,7 +40,23 @@ public class Server {
                 }
             }
         }
+        class ListenRoom extends Thread {
+
+            public ListenRoom() {
+                start();
+            }
+
+            @Override
+            public void run() {
+                try {
+                    ClientRoomListen();
+                } catch (IOException ex) {
+                    Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
         new ListenLogin();
+        new ListenRoom();
     }
     
     private void clientLoginListen() throws IOException{
@@ -86,11 +105,86 @@ public class Server {
         }
     }
     
+    private void ClientRoomListen() throws IOException{
+        //Tạo server
+        ServerSocket serverRoom = new ServerSocket(9999);
+        int port = 1000;
+        //Vòng lặp chính
+        while(true){
+            try {
+                //Chờ kết nới và chấp nhận kết nối
+                Socket connectSocket = serverRoom.accept();
+                
+                //Tạo luồng dữ liệu nhập xuất
+                outToClientRoom = new ObjectOutputStream(connectSocket.getOutputStream());
+                inFromClientRoom = new ObjectInputStream(connectSocket.getInputStream());
+                
+                Hashtable values = (Hashtable)inFromClientRoom.readObject();
+                //Nếu client yêu cầu tạo phòng
+                if(values.containsKey(Constant.CREATE_ROOM)){
+                    System.out.println("Yêu cầu tạo phòng");
+                    String username = (String)values.get(Constant.USERNAME);
+                    String title = (String)values.get(Constant.ROOM_TITLE);
+                    String clientIP = (String)values.get(Constant.GET_IP);
+                    //Tạo 1 phòng chờ
+                    Room room = new Room(port, title , username, false, clientIP);
+                    Rooms.add(room);
+                    Hashtable messages = new Hashtable();
+                    messages.put(Constant.SERVERREPLY, port);
+                    outToClientRoom.writeObject(messages); // Gửi room vừa tào cho Client
+                    port += 2; // Tăng port lên 2 vì user sẽ dử dụng 2 port
+                }
+                //Nếu client yêu cầu tìm phòng chơi
+                if(values.containsKey(Constant.GET_ROOM)){
+                    System.out.println("Yêu cầu tìm phòng chơi");
+                    //Tạo 1 phòng chờ
+                    Hashtable messages = new Hashtable();
+                    messages.put(Constant.SERVERREPLY,true);
+                    for(Room room : Rooms){
+                        //Tìm phòng đang chờ
+                        if(!room.get_State()){ // state = false : Chưa có người chơi
+                            room.set_State(true);
+                            //Gửi cho người chơi thông tin room
+                            System.out.println(room.get_ID());
+                            messages.put(Constant.GET_ROOM,room);
+                            break;
+                        }
+                    }
+                    outToClientRoom.writeObject(messages);
+                }
+                //Nếu client yêu cầu tìm phòng chơi tại phòng đã chọn
+                if(values.containsKey(Constant.GET_ROOM_AT)){
+                    System.out.println("Yêu cầu tìm phòng chơi đã chọn");
+                    //Tạo 1 phòng chờ
+                    Hashtable messages = new Hashtable();
+                    messages.put(Constant.SERVERREPLY,true);
+                    int index = (int)values.get(Constant.GET_ROOM_AT);
+                    Room room = Rooms.get(index);
+                    if(!room.get_State()){
+                        room.set_State(true);
+                        messages.put(Constant.GET_ROOM_AT, room);
+                    }
+                    outToClientRoom.writeObject(messages);
+                }
+                //Nếu client yêu cầu cập nhật phòng chơi
+                if(values.containsKey(Constant.UPDATE_LIST_ROOM)){
+                    System.out.println("Yêu cầu cập nhật phòng chơi");
+                    outToClientRoom.writeObject(Rooms);
+                }
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        
+    }
     
-    private ObjectOutputStream outToClient;
-    private ObjectInputStream inFromClient;
+    private ObjectOutputStream outToClient; //Phản hồi Đăng Nhập
+    private ObjectInputStream inFromClient; //Tiếp nhận thông tin đăng nhập
+    private ObjectOutputStream outToClientRoom; //Phản hổi yêu cầu phòng Caro
+    private ObjectInputStream inFromClientRoom; //Tiếp nhận thông tin room
     private String userName = "admin";
     private String passWord = "admin";
     private boolean isUserLogin = false;
+    private ArrayList<Room> Rooms = new ArrayList<Room>();
     
 }

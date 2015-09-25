@@ -5,6 +5,16 @@
  */
 package Demo_Caro;
 
+import java.io.*;
+import java.net.*;
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JOptionPane;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+
 /**
  *
  * @author Admin
@@ -15,8 +25,133 @@ public class MainRoom extends javax.swing.JFrame {
      * Creates new form MainRoom
      */
     public MainRoom() {
+        Object[] col = {"Tên phòng","Người chơi", "Trạng thái"};
+        tableModel = new DefaultTableModel(col, 0);
         initComponents();
-        
+        try {
+            serverListenRoom(Constant.UPDATE_LIST_ROOM);
+        } catch (IOException ex) {
+            Logger.getLogger(MainRoom.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    private void serverListenRoom(String action) throws IOException{
+        //Tạo kết nối
+        Socket connectSocket = new Socket("adminpc",9999);
+        //Nếu chọn tạo phòng
+        if(action.equals(Constant.CREATE_ROOM)){
+            try {
+                //Nếu như tạo phòng
+                Hashtable messages = new Hashtable();
+                messages.put(Constant.CREATE_ROOM, true);
+                messages.put(Constant.USERNAME,"Duong Jerry");
+                messages.put(Constant.ROOM_TITLE, roomTitle);
+                //Gửi IP
+                String ip = Inet4Address.getLocalHost().getHostAddress();
+                messages.put(Constant.GET_IP, ip);
+                outToServer = new ObjectOutputStream(connectSocket.getOutputStream());
+                outToServer.writeObject(messages);
+                //Đởi phản hồi từ Server
+                inFromServer = new ObjectInputStream(connectSocket.getInputStream());
+                Hashtable values = (Hashtable)inFromServer.readObject();
+                if(values.containsKey(Constant.SERVERREPLY)){
+                    this.setVisible(false);
+                    int port = (int)values.get(Constant.SERVERREPLY);
+                    CaroServer caro = new CaroServer(ip,port);
+                    caro.setVisible(true);
+                }
+                
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(MainRoom.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        //Nếu chọn tìm phòng chơi
+        if(action.equals(Constant.GET_ROOM)){
+            try {
+                //Nếu như tạo phòng
+                Hashtable messages = new Hashtable();
+                messages.put(Constant.GET_ROOM, true);
+                outToServer = new ObjectOutputStream(connectSocket.getOutputStream());
+                outToServer.writeObject(messages);
+                //Đởi phản hồi từ Server
+                inFromServer = new ObjectInputStream(connectSocket.getInputStream());
+                Hashtable values = new Hashtable();
+                values = (Hashtable)inFromServer.readObject();
+                if(values.containsKey(Constant.SERVERREPLY)){
+                    if(!values.containsKey(Constant.GET_ROOM)){
+                        JOptionPane.showMessageDialog(this,"Không còn phòng nào");
+                    }else{
+                        this.setVisible(false);
+                        Room room = (Room)values.get(Constant.GET_ROOM);
+                        int port = room.get_ID();
+                        String ip = room.get_IP();
+                        CaroClient caro = new CaroClient(ip,port);
+                        caro.setVisible(true);
+                    }
+                }
+                
+                
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(MainRoom.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        //Nếu chọn chơi phòng đang chọn
+        if(action.equals(Constant.GET_ROOM_AT)){
+            try {
+                //Nếu như tạo phòng
+                Hashtable messages = new Hashtable();
+                messages.put(Constant.GET_ROOM_AT, roomTable.getSelectedRow());
+                outToServer = new ObjectOutputStream(connectSocket.getOutputStream());
+                outToServer.writeObject(messages);
+                //Đởi phản hồi từ Server
+                inFromServer = new ObjectInputStream(connectSocket.getInputStream());
+                Hashtable values = new Hashtable();
+                values = (Hashtable)inFromServer.readObject();
+                if(values.containsKey(Constant.SERVERREPLY)){
+                    if(!values.containsKey(Constant.GET_ROOM_AT)){
+                        JOptionPane.showMessageDialog(this,"Phòng đang chơi");
+                    }else{
+                        this.setVisible(false);
+                        Room room = (Room)values.get(Constant.GET_ROOM_AT);
+                        int port = room.get_ID();
+                        String ip = room.get_IP();
+                        CaroClient caro = new CaroClient(ip,port);
+                        caro.setVisible(true);
+                    }
+                }
+                
+                
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(MainRoom.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        //Nếu yêu cầu cập nhật danh sách phòng chơi
+        if(action.equals(Constant.UPDATE_LIST_ROOM)){
+            try {
+                //Nếu như tạo phòng
+                Hashtable messages = new Hashtable();
+                messages.put(Constant.UPDATE_LIST_ROOM, true);
+                outToServer = new ObjectOutputStream(connectSocket.getOutputStream());
+                outToServer.writeObject(messages);
+                //Đởi phản hồi từ Server
+                inFromServer = new ObjectInputStream(connectSocket.getInputStream());
+                ArrayList<Room> Rooms = (ArrayList<Room>)inFromServer.readObject();
+                for(Room room : Rooms){
+                    String title = room.get_Title();
+                    String username = room.get_Username();
+                    String state = "";
+                    if(room.get_State()){
+                        state = "Đang chơi";
+                    }else{
+                        state = "Phòng đang chờ";
+                    }
+                    Object[] data = {title,username,state};
+                    tableModel.addRow(data);
+                }
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(MainRoom.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }
 
     /**
@@ -29,7 +164,7 @@ public class MainRoom extends javax.swing.JFrame {
     private void initComponents() {
 
         mainPanel = new javax.swing.JPanel();
-        roomsPanel = new javax.swing.JScrollPane();
+        roomPanel = new javax.swing.JScrollPane();
         roomTable = new javax.swing.JTable();
         controlPanel = new javax.swing.JPanel();
         createRoomButton = new javax.swing.JButton();
@@ -44,45 +179,30 @@ public class MainRoom extends javax.swing.JFrame {
         mainPanel.setBackground(new java.awt.Color(51, 0, 255));
         mainPanel.setLayout(new javax.swing.BoxLayout(mainPanel, javax.swing.BoxLayout.Y_AXIS));
 
-        roomTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
+        roomPanel.setPreferredSize(new java.awt.Dimension(100, 300));
 
-            },
-            new String [] {
-                "Tên phòng", "Người tạo", "Trạng thái"
-            }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class, java.lang.String.class
-            };
-            boolean[] canEdit = new boolean [] {
-                false, false, false
-            };
+        roomTable.setModel(tableModel);
+        roomPanel.setViewportView(roomTable);
 
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
-        roomsPanel.setViewportView(roomTable);
-        if (roomTable.getColumnModel().getColumnCount() > 0) {
-            roomTable.getColumnModel().getColumn(0).setResizable(false);
-            roomTable.getColumnModel().getColumn(1).setResizable(false);
-            roomTable.getColumnModel().getColumn(2).setResizable(false);
-        }
-
-        mainPanel.add(roomsPanel);
+        mainPanel.add(roomPanel);
 
         controlPanel.setPreferredSize(new java.awt.Dimension(600, 100));
         controlPanel.setLayout(new java.awt.GridLayout(1, 0));
 
         createRoomButton.setText("Tạo phòng");
+        createRoomButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                createRoomButtonActionPerformed(evt);
+            }
+        });
         controlPanel.add(createRoomButton);
 
         findRoomButton.setText("Chơi");
+        findRoomButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                findRoomButtonActionPerformed(evt);
+            }
+        });
         controlPanel.add(findRoomButton);
 
         mainPanel.add(controlPanel);
@@ -99,6 +219,32 @@ public class MainRoom extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void createRoomButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createRoomButtonActionPerformed
+        try {
+            // TODO add your handling code here:
+            roomTitle = JOptionPane.showInputDialog(this,"Tên phòng");
+            serverListenRoom(Constant.CREATE_ROOM);
+        } catch (IOException ex) {
+            Logger.getLogger(MainRoom.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+    }//GEN-LAST:event_createRoomButtonActionPerformed
+
+    private void findRoomButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_findRoomButtonActionPerformed
+        // TODO add your handling code here:
+        try {
+            // TODO add your handling code here:
+            if(roomTable.getSelectedRow() != -1){
+                serverListenRoom(Constant.GET_ROOM_AT);
+            }else{
+                serverListenRoom(Constant.GET_ROOM);
+            }
+            
+        } catch (IOException ex) {
+            Logger.getLogger(MainRoom.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_findRoomButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -143,7 +289,13 @@ public class MainRoom extends javax.swing.JFrame {
     private javax.swing.JButton findRoomButton;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JMenuBar menuBar;
+    private javax.swing.JScrollPane roomPanel;
     private javax.swing.JTable roomTable;
-    private javax.swing.JScrollPane roomsPanel;
     // End of variables declaration//GEN-END:variables
+    private String roomTitle;
+    private String userName = "Duong Jerry";
+    private ObjectOutputStream outToServer;
+    private ObjectInputStream inFromServer;
+    private DefaultTableModel tableModel;
+
 }

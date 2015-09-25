@@ -37,8 +37,10 @@ public class CaroServer extends javax.swing.JFrame {
     /**
      * Creates new form CaroFrame
      */
-    public CaroServer() {
+    public CaroServer(String ip, int port) {
         initComponents();
+        gamePort = port;
+        chatPort = port+1;
         mls = boardPanel.getMouseListeners();
         setKeyWord(); // Cấu hình text cho khung chat
         class ListenGame extends Thread {
@@ -430,7 +432,8 @@ public class CaroServer extends javax.swing.JFrame {
         private void clientChatListen(){
             try{
                 System.out.println("Theard Chat Running....");
-                ServerSocket serverSocket = new ServerSocket(6789);
+                System.out.println("Tạo server Game:"+chatPort);
+                ServerSocket serverSocket = new ServerSocket(chatPort);
                 while(true){
                     //Chấp nhậ kết nối Chat
                     clientChatSocket = serverSocket.accept();
@@ -464,7 +467,8 @@ public class CaroServer extends javax.swing.JFrame {
         private void clientListen(){
             try{
                 System.out.println("Theard Running...");
-                ServerSocket serverSocket = new ServerSocket(12345);
+                System.out.println("Tạo server Game:"+gamePort);
+                ServerSocket serverSocket = new ServerSocket(gamePort);
                 while(true){
                 try{
                     //Dừng game lại khi chưa có kết nối nào
@@ -1029,7 +1033,7 @@ public class CaroServer extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new CaroServer().setVisible(true);
+//                new CaroServer().setVisible(true);
             }
         });
     }
@@ -1082,4 +1086,6 @@ public class CaroServer extends javax.swing.JFrame {
     private SimpleAttributeSet clientKeyWord = new SimpleAttributeSet(); // Kiểu chữ của client
     private SimpleAttributeSet serverKeyWord = new SimpleAttributeSet(); // Kiểu chữ của server
     private SimpleAttributeSet alertKeyWord = new SimpleAttributeSet(); // Kiểu chữ của hệ thống thông báo
+    private int gamePort;
+    private int chatPort;
 }
