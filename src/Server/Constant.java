@@ -25,8 +25,12 @@ public class Constant {
     public static final String PASSWORD = "password";
     public static final String ISLOGIN = "islogin";
     public static final String ISSIGNUP = "issignup";
+    public static final String IS_SIGNUPED = "issignuped";
     public static final String SERVERREPLY = "serverreply";
     public static final String LOGINSUCCESS = "loginsuccess";
+    public static final String SIGNUP_SUCCESS ="signupsuccess";
+    public static final String SIGNUP_FAIL ="signupfail";
+    public static final String IS_LOGINED = "islogined";
     public static final String USERNAME_FAIL = "usernamefail";
     public static final String PASSWORD_FAIL = "passwordfail";
     public static final String CREATE_ROOM = "createroom";
@@ -38,4 +42,8 @@ public class Constant {
     public static final String UPDATE_LIST_ROOM = "updatelistroom";
     public static final String IS_PLAYING = "isplaying";
     public static final String CLIENT_EXIT_ROOM = "clientexitroom";
+    public static final String DATABASE_CONNECT_URL = "jdbc:mysql://localhost/caro";
+    public static final String DATABASE_USER = "root";
+    public static final String DATABASE_PASSWORD = "";
+    public static final String MYSQL_DRIVER = "com.mysql.jdbc.Driver";
 }

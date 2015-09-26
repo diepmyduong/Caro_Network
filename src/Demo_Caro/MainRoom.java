@@ -269,6 +269,10 @@ public class MainRoom extends javax.swing.JFrame {
         try {
             // TODO add your handling code here:
             roomTitle = JOptionPane.showInputDialog(this,"Tên phòng");
+            if(roomTitle == null || (roomTitle != null && ("".equals(roomTitle))))   
+            {
+                return;
+            }
             serverListenRoom(Constant.CREATE_ROOM);
         } catch (IOException ex) {
             Logger.getLogger(MainRoom.class.getName()).log(Level.SEVERE, null, ex);

@@ -25,44 +25,91 @@ public class Login extends javax.swing.JFrame {
         initComponents();
     }
     
-    private void serverLoginListen(String username, String password) throws IOException{
+    private void serverLoginListen(String username, String password,String action) throws IOException{
         try {
             //tạo socket
             System.out.println("Kết nối server...");
             Socket loginSocket = new Socket("adminpc",8888);
-            //tạo luồng dữ liệu nhâp xuất
-            System.out.println("Gửi thông tin đăng nhập");
-            outToSever = new ObjectOutputStream(loginSocket.getOutputStream());
-            Hashtable messages = new Hashtable();
-            messages.put(Constant.ISLOGIN, true);
-            messages.put(Constant.USERNAME,username);
-            messages.put(Constant.PASSWORD,password);
-            outToSever.writeObject(messages);
-            System.out.println("Đã gửi");
-            inFromServer = new ObjectInputStream(loginSocket.getInputStream());
-            Hashtable values = (Hashtable)inFromServer.readObject();
-            
-            if(values.containsKey(Constant.SERVERREPLY)){
-                //Nếu thành công
-                System.out.println("Có phản hồi");
-                String message =(String) values.get(Constant.SERVERREPLY);
-                if(message.equals(Constant.LOGINSUCCESS)){
-                    System.out.println("thành công");
-                    this.setVisible(false);
-                    MainRoom main = new MainRoom();
-                    main.setVisible(true);
+            //Nếu người dùng đăng nhập
+            if(action.equals(Constant.ISLOGIN)){
+                //tạo luồng dữ liệu nhâp xuất
+                System.out.println("Gửi thông tin đăng nhập");
+                outToSever = new ObjectOutputStream(loginSocket.getOutputStream());
+                Hashtable messages = new Hashtable();
+                messages.put(Constant.ISLOGIN, true);
+                messages.put(Constant.USERNAME,username);
+                messages.put(Constant.PASSWORD,password);
+                outToSever.writeObject(messages);
+                System.out.println("Đã gửi");
+                inFromServer = new ObjectInputStream(loginSocket.getInputStream());
+                Hashtable values = (Hashtable)inFromServer.readObject();
+
+                if(values.containsKey(Constant.SERVERREPLY)){
+                    //Nếu thành công
+                    System.out.println("Có phản hồi");
+                    String message =(String) values.get(Constant.SERVERREPLY);
+                    if(message.equals(Constant.LOGINSUCCESS)){
+                        System.out.println("thành công");
+                        this.setVisible(false);
+                        MainRoom main = new MainRoom();
+                        main.setVisible(true);
+                    }
+                    //Nếu sai tài khoản
+                    if(message.equals(Constant.USERNAME_FAIL)){
+                        System.out.println("không thành công");
+                        JOptionPane.showMessageDialog(this,"Tài khoản không tồn tại....");
+                        return;
+                    }
+                    //Nếu sai mật khẩu
+                    if(message.equals(Constant.PASSWORD_FAIL)){
+                        System.out.println("không thành công");
+                        JOptionPane.showMessageDialog(this,"Mật khẩu không đúng....");
+                        return;
+                    }
+                    //Nếu tài khoản đã được đăng nhập
+                    if(message.equals(Constant.IS_LOGINED)){
+                        System.out.println("không thành công");
+                        JOptionPane.showMessageDialog(this,"Tài khoản này đã được đăng nhập");
+                        return;
+                    }
                 }
-                //Nếu sai tài khoản
-                if(message.equals(Constant.USERNAME_FAIL)){
-                    System.out.println("không thành công");
-                    JOptionPane.showMessageDialog(this,"Tài khoản không tồn tại....");
-                    return;
-                }
-                //Nếu sai mật khẩu
-                if(message.equals(Constant.PASSWORD_FAIL)){
-                    System.out.println("không thành công");
-                    JOptionPane.showMessageDialog(this,"Mật khẩu không đúng....");
-                    return;
+            }
+            //Nếu người dùng đăng ký
+            if(action.equals(Constant.ISSIGNUP)){
+                //tạo luồng dữ liệu nhâp xuất
+                System.out.println("Gửi thông tin đăng ký");
+                outToSever = new ObjectOutputStream(loginSocket.getOutputStream());
+                Hashtable messages = new Hashtable();
+                messages.put(Constant.ISSIGNUP, true);
+                messages.put(Constant.USERNAME,username);
+                messages.put(Constant.PASSWORD,password);
+                outToSever.writeObject(messages);
+                System.out.println("Đã gửi");
+                inFromServer = new ObjectInputStream(loginSocket.getInputStream());
+                Hashtable values = (Hashtable)inFromServer.readObject();
+
+                if(values.containsKey(Constant.SERVERREPLY)){
+                    //Nếu thành công
+                    System.out.println("Có phản hồi");
+                    String message =(String) values.get(Constant.SERVERREPLY);
+                    if(message.equals(Constant.SIGNUP_SUCCESS)){
+                        System.out.println("thành công");
+                        this.setVisible(false);
+                        MainRoom main = new MainRoom();
+                        main.setVisible(true);
+                    }
+                    //Nếu sai tài khoản
+                    if(message.equals(Constant.SIGNUP_FAIL)){
+                        System.out.println("không thành công");
+                        JOptionPane.showMessageDialog(this,"Đăng ký không thành công");
+                        return;
+                    }
+                    //Nếu sai mật khẩu
+                    if(message.equals(Constant.IS_SIGNUPED)){
+                        System.out.println("không thành công");
+                        JOptionPane.showMessageDialog(this,"Tài khoản đã tồn tại");
+                        return;
+                    }
                 }
             }
         } catch (ClassNotFoundException ex) {
@@ -155,6 +202,11 @@ public class Login extends javax.swing.JFrame {
         jPanel1.add(loginButton);
 
         signupButton.setText("Đăng ký");
+        signupButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                signupButtonActionPerformed(evt);
+            }
+        });
         jPanel1.add(signupButton);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -168,11 +220,37 @@ public class Login extends javax.swing.JFrame {
     private void loginButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loginButtonActionPerformed
         try {
             // TODO add your handling code here:
-            serverLoginListen(userNameTxt.getText(), passwordTxt.getText());
+            if(userNameTxt.getText().equals("")){
+                JOptionPane.showMessageDialog(this,"Chưa nhập username");
+                return;
+            }
+            if(passwordTxt.getText().equals("")){
+                JOptionPane.showMessageDialog(this,"Chưa nhập password");
+                return;
+            }
+            serverLoginListen(userNameTxt.getText(), passwordTxt.getText(),Constant.ISLOGIN);
         } catch (IOException ex) {
             Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_loginButtonActionPerformed
+
+    private void signupButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_signupButtonActionPerformed
+        // TODO add your handling code here:
+        try {
+            if(userNameTxt.getText().equals("")){
+                JOptionPane.showMessageDialog(this,"Chưa nhập username");
+                return;
+            }
+            if(passwordTxt.getText().equals("")){
+                JOptionPane.showMessageDialog(this,"Chưa nhập password");
+                return;
+            }
+            // TODO add your handling code here:
+            serverLoginListen(userNameTxt.getText(), passwordTxt.getText(),Constant.ISSIGNUP);
+        } catch (IOException ex) {
+            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_signupButtonActionPerformed
 
     /**
      * @param args the command line arguments

@@ -77,25 +77,73 @@ public class Server {
                 System.out.println("nhận được thông tin");
                 //Client đăng nhập
                 if(values.containsKey(Constant.ISLOGIN)){
+                    //Tìm kiếm người dùng
+                    String username = (String)values.get(Constant.USERNAME);
+                    String password = (String)values.get(Constant.PASSWORD);
+                    User user = User.find(username);
                     //Kiểm tra thông tin đăng nhập
                     System.out.println("Đặng nhập");
-                    if(userName.equals((String)values.get(Constant.USERNAME))){
-                        if(passWord.equals((String)values.get(Constant.PASSWORD))){
-                            //Nếu thông tin đúng thì chạy 
-                            
-                            Hashtable messages = new Hashtable();
-                            messages.put(Constant.SERVERREPLY,Constant.LOGINSUCCESS);
-                            outToClient.writeObject(messages);
-                            isUserLogin = true; // Đăng nhập
+                    if(user!= null){
+                        //Nếu người dùng tồn tại
+                        //Kiểm tra mật khẩu
+                        if(password.equals(user.getPassword())){
+                            //Thông tin hợp lệ
+                            //Kiểm tra người dùng đã từng đăng nhập chưa
+                            System.out.println(Users);
+                            System.out.println(Users.contains(user));
+                            if(Users.contains(user)){
+                                //Nếu tài khoản đã được đăng nhập
+                                Hashtable messages = new Hashtable();
+                                messages.put(Constant.SERVERREPLY,Constant.IS_LOGINED);
+                                outToClient.writeObject(messages);
+                            }else{
+                                //Đăng nhập thành công
+                                //Lưu người dùng vào danh sách
+                                Hashtable messages = new Hashtable();
+                                messages.put(Constant.SERVERREPLY,Constant.LOGINSUCCESS);
+                                outToClient.writeObject(messages);
+                                Users.add(user);
+                            }
                         }else{
+                            //Nếu mật khẩu sai
                             Hashtable messages = new Hashtable();
                             messages.put(Constant.SERVERREPLY,Constant.PASSWORD_FAIL);
                             outToClient.writeObject(messages);
                         }
                     }else{
+                        //Nếu người dùng không tồn tại
                         Hashtable messages = new Hashtable();
                         messages.put(Constant.SERVERREPLY,Constant.USERNAME_FAIL);
                         outToClient.writeObject(messages);
+                    }
+                }
+                //Client đăng ký
+                if(values.containsKey(Constant.ISSIGNUP)){
+                    //Tìm kiếm người dùng
+                    String username = (String)values.get(Constant.USERNAME);
+                    String password = (String)values.get(Constant.PASSWORD);
+                    User user = User.find(username);
+                    //Kiểm tra thông tin người dùng có tồn tại không
+                    if(user!= null){
+                        //Nếu người dùng tồn tại
+                        Hashtable messages = new Hashtable();
+                        messages.put(Constant.SERVERREPLY,Constant.IS_SIGNUPED);
+                        outToClient.writeObject(messages);
+                    }else{
+                        //Nếu người dùng chưa có
+                        user = new User(username,password);
+                        if(user.save() == 1){
+                            //Nếu đăng ký thành công
+                            Hashtable messages = new Hashtable();
+                            messages.put(Constant.SERVERREPLY,Constant.SIGNUP_SUCCESS);
+                            outToClient.writeObject(messages);
+                            Users.add(user);
+                        }else{
+                            //Đăng ký không thành công
+                            Hashtable messages = new Hashtable();
+                            messages.put(Constant.SERVERREPLY,Constant.SIGNUP_FAIL);
+                            outToClient.writeObject(messages);
+                        }
                     }
                 }
             } catch (ClassNotFoundException ex) {
@@ -199,9 +247,7 @@ public class Server {
     private ObjectInputStream inFromClient; //Tiếp nhận thông tin đăng nhập
     private ObjectOutputStream outToClientRoom; //Phản hổi yêu cầu phòng Caro
     private ObjectInputStream inFromClientRoom; //Tiếp nhận thông tin room
-    private String userName = "admin";
-    private String passWord = "admin";
-    private boolean isUserLogin = false;
-    private ArrayList<Room> Rooms = new ArrayList<Room>();
+    private ArrayList<Room> Rooms = new ArrayList<Room>(); //Danh sách phòng đã được tạo
+    private ArrayList<User> Users = new ArrayList<User>(); //Danh sách người dùng đã đặng nhập
     
 }
