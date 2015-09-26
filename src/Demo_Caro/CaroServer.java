@@ -37,34 +37,29 @@ public class CaroServer extends javax.swing.JFrame {
     /**
      * Creates new form CaroFrame
      */
-    public CaroServer(String ip, int port) {
+    public CaroServer(String ip, int port,MainRoom Rooms) {
         initComponents();
         gamePort = port;
         chatPort = port+1;
+        mainRoom = Rooms; //Frame Main Room
         mls = boardPanel.getMouseListeners();
         setKeyWord(); // Cấu hình text cho khung chat
-        class ListenGame extends Thread {
-
-            public ListenGame() {
-                start();
-            }
+        GameListen = new Thread(new Runnable() {
 
             @Override
             public void run() {
                 clientListen();
             }
-        }
-        class ListenChat extends Thread {
-            public ListenChat(){
-                start();
-            }
+        });
+        ChatListen = new Thread(new Runnable() {
+
             @Override
-            public void run(){
+            public void run() {
                 clientChatListen();
             }
-        }
-        new ListenGame();
-        new ListenChat();
+        });
+        GameListen.start();
+        ChatListen.start();
         createBoard();
         scrollBar = chatScrollPane.getVerticalScrollBar();
         
@@ -600,7 +595,7 @@ public class CaroServer extends javax.swing.JFrame {
         fileMenu = new javax.swing.JMenu();
         exitMenuItem = new javax.swing.JMenuItem();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         setTitle("Caro Network");
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
@@ -743,6 +738,7 @@ public class CaroServer extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void exitForm(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_exitForm
+       
         userExit();
     }//GEN-LAST:event_exitForm
 
@@ -964,7 +960,9 @@ public class CaroServer extends javax.swing.JFrame {
 
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
         // TODO add your handling code here:
-        this.setVisible(true);
+        
+//        this.setVisible(true);
+//        userExit();
     }//GEN-LAST:event_formWindowClosed
     //Đối thủ thoát game
     private void userExit(){
@@ -979,7 +977,11 @@ public class CaroServer extends javax.swing.JFrame {
                     Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-            System.exit(0);
+            ChatListen.stop();
+            GameListen.stop();
+            this.dispose();
+            mainRoom.clientExitRoom(gamePort);
+            mainRoom.setVisible(true);
         }
     }
     
@@ -1079,6 +1081,8 @@ public class CaroServer extends javax.swing.JFrame {
     private Thread pausing; //Khoảng thời gian được phép ngừng ngừng
     private Thread waitNextReplay;
     private Thread waitNextPause;
+    private Thread GameListen;
+    private Thread ChatListen;
     private int nextPause; //Khoảng thời gian cho lần ngừng sau
     private int nextReplay; //Khoảng thời gian cho lần chơi lại tiếp theo
     private StyledDocument docChat; //Nội dung khung chat
@@ -1088,4 +1092,5 @@ public class CaroServer extends javax.swing.JFrame {
     private SimpleAttributeSet alertKeyWord = new SimpleAttributeSet(); // Kiểu chữ của hệ thống thông báo
     private int gamePort;
     private int chatPort;
+    private MainRoom mainRoom;
 }

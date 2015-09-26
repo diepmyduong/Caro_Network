@@ -171,6 +171,23 @@ public class Server {
                     System.out.println("Yêu cầu cập nhật phòng chơi");
                     outToClientRoom.writeObject(Rooms);
                 }
+                //Nếu client thoát khỏi phòng chơi do người khác tạo
+                if(values.containsKey(Constant.CLIENT_EXIT_ROOM)){
+                    System.out.println("Thoát khỏi phòng chơi");
+                    int roomID = (int)values.get(Constant.CLIENT_EXIT_ROOM);
+                    for(Room room: Rooms){
+                        if(roomID == room.get_ID()){
+                            if(room.get_State()){
+                               room.set_State(false);
+                                break; 
+                            }else{
+                                Rooms.remove(room);
+                                break;
+                            }
+                        }
+                    }
+                    outToClientRoom.writeObject(true);
+                }
             } catch (ClassNotFoundException ex) {
                 Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
             }

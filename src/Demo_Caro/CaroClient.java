@@ -36,41 +36,36 @@ public class CaroClient extends javax.swing.JFrame {
     /**
      * Creates new form CaroFrame
      */
-    public CaroClient(String ip, int port) {
+    public CaroClient(String ip, int port,MainRoom Rooms) {
         initComponents();
         gamePort = port;
         chatPort = port+1;
         serverIP = ip;
+        mainRoom = Rooms; //Frame MainRoom
         System.out.println(ip);
         System.out.println(gamePort);
         System.out.println(chatPort);
         mls = boardPanel.getMouseListeners();
         setKeyWord(); // Cấu hình text cho khung chat
-        class ListenGame extends Thread {
-
-            public ListenGame() {
-                start();
-            }
+        GameListen = new Thread(new Runnable() {
 
             @Override
             public void run() {
                 serverListen();
             }
-        }
-        class ListenChat extends Thread {
-            public ListenChat(){
-                start();
-            }
+        });
+        ChatListen = new Thread(new Runnable() {
+
             @Override
             public void run() {
                 serverChatListen();
             }
-        }
-        
-        new ListenGame();
-        new ListenChat();
+        });
+        GameListen.start();
+        ChatListen.start();
         createBoard();
         scrollBar = chatScrollPane.getVerticalScrollBar();
+        
     }
     //Cấu hình text cho khung chat 
     private void setKeyWord(){
@@ -448,6 +443,7 @@ public class CaroClient extends javax.swing.JFrame {
                 //Vòng lặp chính
                 while(true){
                     values = (Hashtable)inFromChatServer.readObject();
+                    System.out.println("Running..");
                     serverChat((String)values.get(Constant.MESSAGE));
                 }
                 
@@ -541,8 +537,12 @@ public class CaroClient extends javax.swing.JFrame {
                    
                    //Nếu server thoát trò chơi
                    if(values.containsKey(Constant.ISEXIT)){
-                       JOptionPane.showMessageDialog(this, "Đối thủ đã thoát khỏi game");
-                       System.exit(0);
+                        JOptionPane.showMessageDialog(this, "Đối thủ đã thoát khỏi game");
+                        this.dispose();
+                        mainRoom.clientExitRoom(gamePort);
+                        mainRoom.setVisible(true);
+                        ChatListen.stop();
+                        GameListen.stop();
                    }
                }
             }catch(Exception e){
@@ -970,7 +970,12 @@ public class CaroClient extends javax.swing.JFrame {
                     Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-            System.exit(0);
+//            System.exit(0);
+            ChatListen.stop();
+            GameListen.stop();
+            this.dispose();
+            mainRoom.clientExitRoom(gamePort);
+            mainRoom.setVisible(true);
         }
     }
     
@@ -1051,6 +1056,8 @@ public class CaroClient extends javax.swing.JFrame {
     private Thread pausing; //Khoảng thời gian được phép ngừng ngừng
     private Thread waitNextPause; 
     private Thread waitNextReplay;
+    private Thread GameListen;
+    private Thread ChatListen;
     private int nextPause; //Khoảng thời gian cho lần ngừng sau
     private int nextReplay; //Khoảng thời gian cho lần chơi lại tiếp theo
     private StyledDocument docChat; //Nội dung khung chat
@@ -1061,4 +1068,5 @@ public class CaroClient extends javax.swing.JFrame {
     private int gamePort;
     private int chatPort;
     private String serverIP;
+    private MainRoom mainRoom;
 }

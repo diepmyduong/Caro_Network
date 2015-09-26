@@ -37,4 +37,5 @@ public class Constant {
     public static final String GET_IP = "getip";
     public static final String UPDATE_LIST_ROOM = "updatelistroom";
     public static final String IS_PLAYING = "isplaying";
+    public static final String CLIENT_EXIT_ROOM = "clientexitroom";
 }
