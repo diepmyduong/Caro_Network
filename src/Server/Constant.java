@@ -46,4 +46,6 @@ public class Constant {
     public static final String DATABASE_USER = "root";
     public static final String DATABASE_PASSWORD = "";
     public static final String MYSQL_DRIVER = "com.mysql.jdbc.Driver";
+    public static final String FIND_USER = "finduser";
+    public static final String IS_ROOM_BUSY = "isroombusy";
 }

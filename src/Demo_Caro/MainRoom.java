@@ -24,9 +24,10 @@ public class MainRoom extends javax.swing.JFrame {
     /**
      * Creates new form MainRoom
      */
-    public MainRoom() {
+    public MainRoom(String username) {
         Object[] col = {"Tên phòng","Người chơi", "Trạng thái"};
         tableModel = new DefaultTableModel(col, 0);
+        this.userName = username;
         initComponents();
         updateListRoom();
     }
@@ -53,7 +54,7 @@ public class MainRoom extends javax.swing.JFrame {
                 //Nếu như tạo phòng
                 Hashtable messages = new Hashtable();
                 messages.put(Constant.CREATE_ROOM, true);
-                messages.put(Constant.USERNAME,"Duong Jerry");
+                messages.put(Constant.USERNAME,userName);
                 messages.put(Constant.ROOM_TITLE, roomTitle);
                 //Gửi IP
                 String ip = Inet4Address.getLocalHost().getHostAddress();
@@ -66,7 +67,7 @@ public class MainRoom extends javax.swing.JFrame {
                 if(values.containsKey(Constant.SERVERREPLY)){
                     this.setVisible(false);
                     int port = (int)values.get(Constant.SERVERREPLY);
-                    caroServer = new CaroServer(ip,port,this);
+                    caroServer = new CaroServer(ip,port,userName,this);
                     caroServer.setVisible(true);
                 }
                 
@@ -94,7 +95,8 @@ public class MainRoom extends javax.swing.JFrame {
                         Room room = (Room)values.get(Constant.GET_ROOM);
                         int port = room.get_ID();
                         String ip = room.get_IP();
-                        caroClient = new CaroClient(ip,port,this);
+                        String serverName = room.get_Username();
+                        caroClient = new CaroClient(ip,port,userName,serverName,this);
                         caroClient.setVisible(true);
                     }
                 }
@@ -124,7 +126,8 @@ public class MainRoom extends javax.swing.JFrame {
                         Room room = (Room)values.get(Constant.GET_ROOM_AT);
                         int port = room.get_ID();
                         String ip = room.get_IP();
-                        caroClient = new CaroClient(ip,port,this);
+                        String serverName = room.get_Username();
+                        caroClient = new CaroClient(ip,port,userName,serverName,this);
                         caroClient.setVisible(true);
                     }
                     updateListRoom();
@@ -179,6 +182,59 @@ public class MainRoom extends javax.swing.JFrame {
                 Logger.getLogger(MainRoom.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+        //Nếu người dùng thoát khỏi Game
+        if(action.equals(Constant.ISEXIT)){
+            try {
+                Hashtable messages = new Hashtable();
+                messages.put(Constant.ISEXIT, true);
+                messages.put(Constant.USERNAME, userName);
+                outToServer = new ObjectOutputStream(connectSocket.getOutputStream());
+                outToServer.writeObject(messages);
+                //Đởi phản hồi từ Server
+                inFromServer = new ObjectInputStream(connectSocket.getInputStream());
+                if((boolean)inFromServer.readObject()){
+                    System.exit(0);
+                }
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(MainRoom.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+        }
+        //Nếu người dùng tìm kiếm người chơi
+        if(action.equals(Constant.FIND_USER)){
+            try {
+                Hashtable messages = new Hashtable();
+                messages.put(Constant.FIND_USER, true);
+                messages.put(Constant.USERNAME, competitorName);
+                outToServer = new ObjectOutputStream(connectSocket.getOutputStream());
+                outToServer.writeObject(messages);
+                //Đởi phản hồi từ Server
+                inFromServer = new ObjectInputStream(connectSocket.getInputStream());
+                Hashtable values = new Hashtable();
+                values = (Hashtable)inFromServer.readObject();
+                if(values.containsKey(Constant.SERVERREPLY)){
+                    if(values.containsKey(Constant.IS_ROOM_BUSY)){
+                        if((boolean)values.get(Constant.IS_ROOM_BUSY)){
+                            JOptionPane.showMessageDialog(this,"Phòng đang chơi");
+                        }else{
+                            this.setVisible(false);
+                            Room room = (Room)values.get(Constant.GET_ROOM_AT);
+                            int port = room.get_ID();
+                            String ip = room.get_IP();
+                            String serverName = room.get_Username();
+                            caroClient = new CaroClient(ip,port,userName,serverName,this);
+                            caroClient.setVisible(true);
+                        }
+                    }else{
+                        JOptionPane.showMessageDialog(this,"Chưa có phòng của người dùng này");
+                    }
+                    updateListRoom();
+                }
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(MainRoom.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+        }
     }
     
     public void clientExitRoom(int Room_ID){
@@ -208,10 +264,21 @@ public class MainRoom extends javax.swing.JFrame {
         refreshButton = new javax.swing.JButton();
         menuBar = new javax.swing.JMenuBar();
         fileMenu = new javax.swing.JMenu();
+        exitMenuItem = new javax.swing.JMenuItem();
         actionMenu = new javax.swing.JMenu();
+        createMenuItem = new javax.swing.JMenuItem();
+        findUserMenuItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Caro Game");
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosed(java.awt.event.WindowEvent evt) {
+                formWindowClosed(evt);
+            }
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
+        });
 
         mainPanel.setBackground(new java.awt.Color(51, 0, 255));
         mainPanel.setLayout(new javax.swing.BoxLayout(mainPanel, javax.swing.BoxLayout.Y_AXIS));
@@ -255,9 +322,36 @@ public class MainRoom extends javax.swing.JFrame {
         getContentPane().add(mainPanel, java.awt.BorderLayout.CENTER);
 
         fileMenu.setText("File");
+
+        exitMenuItem.setText("Exit");
+        exitMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                exitMenuItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(exitMenuItem);
+
         menuBar.add(fileMenu);
 
         actionMenu.setText("Action");
+
+        createMenuItem.setText("Tạo phòng");
+        createMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                createMenuItemActionPerformed(evt);
+            }
+        });
+        actionMenu.add(createMenuItem);
+
+        findUserMenuItem.setText("Tìm người chơi");
+        findUserMenuItem.setToolTipText("");
+        findUserMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                findUserMenuItemActionPerformed(evt);
+            }
+        });
+        actionMenu.add(findUserMenuItem);
+
         menuBar.add(actionMenu);
 
         setJMenuBar(menuBar);
@@ -266,6 +360,10 @@ public class MainRoom extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void createRoomButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createRoomButtonActionPerformed
+        createRoom();
+    }//GEN-LAST:event_createRoomButtonActionPerformed
+
+    private void createRoom(){
         try {
             // TODO add your handling code here:
             roomTitle = JOptionPane.showInputDialog(this,"Tên phòng");
@@ -277,9 +375,7 @@ public class MainRoom extends javax.swing.JFrame {
         } catch (IOException ex) {
             Logger.getLogger(MainRoom.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
-    }//GEN-LAST:event_createRoomButtonActionPerformed
-
+    }
     private void findRoomButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_findRoomButtonActionPerformed
         // TODO add your handling code here:
         try {
@@ -299,6 +395,55 @@ public class MainRoom extends javax.swing.JFrame {
         updateListRoom();
     }//GEN-LAST:event_refreshButtonActionPerformed
 
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        // TODO add your handling code here:
+        //Khi người dùng thoát khỏi game
+        userExit();
+        
+    }//GEN-LAST:event_formWindowClosing
+
+    private void exitMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitMenuItemActionPerformed
+        // TODO add your handling code here:
+        userExit();
+    }//GEN-LAST:event_exitMenuItemActionPerformed
+
+    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
+        // TODO add your handling code here:
+        this.setVisible(true);
+    }//GEN-LAST:event_formWindowClosed
+
+    private void createMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createMenuItemActionPerformed
+        // TODO add your handling code here:
+        createRoom();
+    }//GEN-LAST:event_createMenuItemActionPerformed
+
+    private void findUserMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_findUserMenuItemActionPerformed
+        // TODO add your handling code here:
+        try {
+            // TODO add your handling code here:
+            competitorName = JOptionPane.showInputDialog(this,"Tên người chơi");
+            if(competitorName == null || (competitorName != null && ("".equals(competitorName))))   
+            {
+                return;
+            }
+            serverListenRoom(Constant.FIND_USER);
+        } catch (IOException ex) {
+            Logger.getLogger(MainRoom.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_findUserMenuItemActionPerformed
+    private void userExit(){
+        int dialogResult = JOptionPane.showConfirmDialog (this, "Bạn có chắc là muốn thoát chứ?","Warning",JOptionPane.YES_NO_OPTION);
+        if(dialogResult == JOptionPane.YES_OPTION){
+            if(outToServer != null){
+                try {
+                    serverListenRoom(Constant.ISEXIT);
+                } catch (IOException ex) {
+                    Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+    }
+    
     /**
      * @param args the command line arguments
      */
@@ -329,7 +474,7 @@ public class MainRoom extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new MainRoom().setVisible(true);
+//                new MainRoom().setVisible(true);
             }
         });
     }
@@ -337,9 +482,12 @@ public class MainRoom extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenu actionMenu;
     private javax.swing.JPanel controlPanel;
+    private javax.swing.JMenuItem createMenuItem;
     private javax.swing.JButton createRoomButton;
+    private javax.swing.JMenuItem exitMenuItem;
     private javax.swing.JMenu fileMenu;
     private javax.swing.JButton findRoomButton;
+    private javax.swing.JMenuItem findUserMenuItem;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JButton refreshButton;
@@ -347,12 +495,13 @@ public class MainRoom extends javax.swing.JFrame {
     private javax.swing.JTable roomTable;
     // End of variables declaration//GEN-END:variables
     private String roomTitle;
-    private String userName = "Duong Jerry";
+    private String userName;
     private ObjectOutputStream outToServer;
     private ObjectInputStream inFromServer;
     private DefaultTableModel tableModel;
     private int currentRoom;
     private CaroClient caroClient;
     private CaroServer caroServer;
+    private String competitorName;
 
 }

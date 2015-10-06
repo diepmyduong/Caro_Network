@@ -236,6 +236,38 @@ public class Server {
                     }
                     outToClientRoom.writeObject(true);
                 }
+                //Nếu client thoát khỏi game
+                if(values.containsKey(Constant.ISEXIT)){
+                    System.out.println("Thoát khỏi phòng game");
+                    String username = (String)values.get(Constant.USERNAME);
+                    for(User user: Users){
+                        if(username.equals(user.getUsername())){
+                            Users.remove(user);
+                            break;
+                        }
+                    }
+                    outToClientRoom.writeObject(true);
+                }
+                //Nếu client tìm kiếm người chơi
+                if(values.containsKey(Constant.FIND_USER)){
+                    System.out.println("Tìm kiếm người chơi");
+                    Hashtable messages = new Hashtable();
+                    messages.put(Constant.SERVERREPLY,true);
+                    String username = (String)values.get(Constant.USERNAME);
+                    for(Room room: Rooms){
+                        if(username.equals(room.get_Username())){
+                            if(room.get_State()){
+                                messages.put(Constant.IS_ROOM_BUSY, true);
+                            }else{
+                                messages.put(Constant.IS_ROOM_BUSY, false);
+                                messages.put(Constant.GET_ROOM_AT,room);
+                                room.set_State(true);
+                            }
+                            break;
+                        }
+                    }
+                    outToClientRoom.writeObject(messages);
+                }
             } catch (ClassNotFoundException ex) {
                 Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
             }

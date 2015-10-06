@@ -51,7 +51,7 @@ public class Login extends javax.swing.JFrame {
                     if(message.equals(Constant.LOGINSUCCESS)){
                         System.out.println("thành công");
                         this.setVisible(false);
-                        MainRoom main = new MainRoom();
+                        MainRoom main = new MainRoom(username);
                         main.setVisible(true);
                     }
                     //Nếu sai tài khoản
@@ -95,7 +95,7 @@ public class Login extends javax.swing.JFrame {
                     if(message.equals(Constant.SIGNUP_SUCCESS)){
                         System.out.println("thành công");
                         this.setVisible(false);
-                        MainRoom main = new MainRoom();
+                        MainRoom main = new MainRoom(username);
                         main.setVisible(true);
                     }
                     //Nếu sai tài khoản

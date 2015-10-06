@@ -36,12 +36,16 @@ public class CaroClient extends javax.swing.JFrame {
     /**
      * Creates new form CaroFrame
      */
-    public CaroClient(String ip, int port,MainRoom Rooms) {
+    public CaroClient(String ip, int port,String username,String servername,MainRoom Rooms) {
         initComponents();
         gamePort = port;
         chatPort = port+1;
         serverIP = ip;
         mainRoom = Rooms; //Frame MainRoom
+        userNameLabel.setText(username);
+        this.userName = username;
+        competitorNameLabel.setText(servername);
+        this.competitorName = servername;
         System.out.println(ip);
         System.out.println(gamePort);
         System.out.println(chatPort);
@@ -394,7 +398,7 @@ public class CaroClient extends javax.swing.JFrame {
         private void clientChat(String message){
             docChat = chatPanel.getStyledDocument();
             try {
-                docChat.insertString(docChat.getLength(),"Client :"+message+"\n", clientKeyWord);
+                docChat.insertString(docChat.getLength(),userName + " : "+message+"\n", clientKeyWord);
             } catch (BadLocationException ex) {
                 Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -407,7 +411,7 @@ public class CaroClient extends javax.swing.JFrame {
         private void serverChat(String message){
             docChat = chatPanel.getStyledDocument();
             try {
-                docChat.insertString(docChat.getLength(),"Server :"+message+"\n", serverKeyWord);
+                docChat.insertString(docChat.getLength(),competitorName +" : "+message+"\n", serverKeyWord);
             } catch (BadLocationException ex) {
                 Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -462,6 +466,10 @@ public class CaroClient extends javax.swing.JFrame {
                //Tạo luồng Nhập và luồng xuất gắn với Socket
                inFromServer = new ObjectInputStream(clientSocket.getInputStream());
                outToServer = new ObjectOutputStream(clientSocket.getOutputStream());
+               //Gửi thông tin cho server
+               Hashtable userinfo = new Hashtable();
+               userinfo.put(Constant.USERNAME, userName);
+               outToServer.writeObject(userinfo);
                Hashtable values = new Hashtable();
                while(true){
                    values = (Hashtable)inFromServer.readObject();
@@ -480,7 +488,7 @@ public class CaroClient extends javax.swing.JFrame {
                    //Khi Client đã thắng
                    if(values.containsKey(Constant.ISSERVERWIN)){
                        closeUser = true;
-                       JOptionPane.showMessageDialog(this, "Đối thủ đã thắng");
+                       JOptionPane.showMessageDialog(this, competitorName + " đã thắng");
                        repaintBoard();
                    }
                    
@@ -1069,4 +1077,6 @@ public class CaroClient extends javax.swing.JFrame {
     private int chatPort;
     private String serverIP;
     private MainRoom mainRoom;
+    private String userName; // Tên người chơi
+    private String competitorName; //Tên đối thủ
 }

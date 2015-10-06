@@ -37,11 +37,14 @@ public class CaroServer extends javax.swing.JFrame {
     /**
      * Creates new form CaroFrame
      */
-    public CaroServer(String ip, int port,MainRoom Rooms) {
+    public CaroServer(String ip, int port,String username,MainRoom Rooms) {
         initComponents();
         gamePort = port;
         chatPort = port+1;
         mainRoom = Rooms; //Frame Main Room
+        userNameLabel.setText(username);
+        this.userName = username;
+        competitorNameLabel.setText("Đang chờ người chơi...");
         mls = boardPanel.getMouseListeners();
         setKeyWord(); // Cấu hình text cho khung chat
         GameListen = new Thread(new Runnable() {
@@ -155,7 +158,7 @@ public class CaroServer extends javax.swing.JFrame {
                    Hashtable values = new Hashtable();
                    values.put(Constant.ISCLIENTWIN, true);
                    outToClient.writeObject(values);
-                   JOptionPane.showMessageDialog(this, "Đối thủ đã thắng");
+                   JOptionPane.showMessageDialog(this, competitorName+" đã thắng");
                    repaintBoard();
                    return;
                }
@@ -390,7 +393,7 @@ public class CaroServer extends javax.swing.JFrame {
         private void clientChat(String message){
             docChat = chatPanel.getStyledDocument();
             try {
-                docChat.insertString(docChat.getLength(),"Client :"+message+"\n", clientKeyWord);
+                docChat.insertString(docChat.getLength(),competitorName +" : "+message+"\n", clientKeyWord);
             } catch (BadLocationException ex) {
                 Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -403,7 +406,7 @@ public class CaroServer extends javax.swing.JFrame {
         private void serverChat(String message){
             docChat = chatPanel.getStyledDocument();
             try {
-                docChat.insertString(docChat.getLength(),"Server :"+message+"\n", serverKeyWord);
+                docChat.insertString(docChat.getLength(),userName +" : "+message+"\n", serverKeyWord);
             } catch (BadLocationException ex) {
                 Logger.getLogger(CaroServer.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -486,7 +489,12 @@ public class CaroServer extends javax.swing.JFrame {
                         //Đọc dữ liệu được gửi lên từ Client
                         
                         values = (Hashtable)inFromClient.readObject();
-                        
+                        //Khi client vào phòng sẽ gửi tên người chơi qua
+                        if(values.containsKey(Constant.USERNAME)){
+                            System.out.println("Client Name..");
+                            competitorName = (String)values.get(Constant.USERNAME);
+                            competitorNameLabel.setText(competitorName);
+                        }
                         //Khi client đánh
                         if(values.containsKey(Constant.CLIENTCHECKED)){
                             System.out.println("Client Checking....");
@@ -549,6 +557,7 @@ public class CaroServer extends javax.swing.JFrame {
                         if(values.containsKey(Constant.ISEXIT)){
                             JOptionPane.showMessageDialog(this, "Đối thủ đã thoát khỏi game");
                             closeUser = true;
+                            competitorNameLabel.setText("Đang chờ người chơi...");
                             repaintBoard();
                             break;
                         }
@@ -1093,4 +1102,6 @@ public class CaroServer extends javax.swing.JFrame {
     private int gamePort;
     private int chatPort;
     private MainRoom mainRoom;
+    private String userName;
+    private String competitorName;
 }
