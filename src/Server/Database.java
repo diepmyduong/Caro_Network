@@ -18,8 +18,8 @@ public class Database {
     
     public Database(){
         try {
-            Class.forName(Constant.MYSQL_DRIVER);
-            con = DriverManager.getConnection(Constant.DATABASE_CONNECT_URL,Constant.DATABASE_USER,Constant.DATABASE_PASSWORD);
+            Class.forName(Constant.SQLSERVER_DRIVER);
+            con = DriverManager.getConnection(Constant.DATABASE_CONNECT_SQLSERVER_URL);
             System.out.println("Connect Success");
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, ex);

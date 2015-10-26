@@ -28,8 +28,9 @@ public class Login extends javax.swing.JFrame {
     private void serverLoginListen(String username, String password,String action) throws IOException{
         try {
             //tạo socket
+            String serverIP = serverIPTxt.getText();
             System.out.println("Kết nối server...");
-            Socket loginSocket = new Socket("adminpc",8888);
+            Socket loginSocket = new Socket(serverIP,8888);
             //Nếu người dùng đăng nhập
             if(action.equals(Constant.ISLOGIN)){
                 //tạo luồng dữ liệu nhâp xuất
@@ -134,7 +135,7 @@ public class Login extends javax.swing.JFrame {
         userNameTxt = new javax.swing.JTextField();
         passwordTxt = new javax.swing.JPasswordField();
         serverLabel = new javax.swing.JLabel();
-        serverList = new javax.swing.JComboBox();
+        serverIPTxt = new javax.swing.JTextField();
         jPanel1 = new javax.swing.JPanel();
         loginButton = new javax.swing.JButton();
         signupButton = new javax.swing.JButton();
@@ -152,7 +153,7 @@ public class Login extends javax.swing.JFrame {
 
         serverLabel.setText("Server :");
 
-        serverList.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        serverIPTxt.setText("Adminpc");
 
         javax.swing.GroupLayout userInfoPanelLayout = new javax.swing.GroupLayout(userInfoPanel);
         userInfoPanel.setLayout(userInfoPanelLayout);
@@ -166,9 +167,9 @@ public class Login extends javax.swing.JFrame {
                     .addComponent(serverLabel))
                 .addGap(18, 18, 18)
                 .addGroup(userInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(userNameTxt)
-                    .addComponent(serverList, 0, 199, Short.MAX_VALUE)
-                    .addComponent(passwordTxt))
+                    .addComponent(userNameTxt, javax.swing.GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
+                    .addComponent(passwordTxt)
+                    .addComponent(serverIPTxt))
                 .addContainerGap())
         );
         userInfoPanelLayout.setVerticalGroup(
@@ -184,8 +185,8 @@ public class Login extends javax.swing.JFrame {
                 .addGap(15, 15, 15)
                 .addGroup(userInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(serverLabel)
-                    .addComponent(serverList, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(0, 10, Short.MAX_VALUE))
+                    .addComponent(serverIPTxt, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 13, Short.MAX_VALUE))
         );
 
         getContentPane().add(userInfoPanel, new java.awt.GridBagConstraints());
@@ -292,8 +293,8 @@ public class Login extends javax.swing.JFrame {
     private javax.swing.JButton loginButton;
     private javax.swing.JLabel passwordLabel;
     private javax.swing.JPasswordField passwordTxt;
+    private javax.swing.JTextField serverIPTxt;
     private javax.swing.JLabel serverLabel;
-    private javax.swing.JComboBox serverList;
     private javax.swing.JButton signupButton;
     private javax.swing.JPanel userInfoPanel;
     private javax.swing.JLabel userNameLabel;

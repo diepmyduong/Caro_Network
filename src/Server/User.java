@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 public class User implements Serializable{
     private String username;
     private String password;
-    private boolean statement;
+    private int statement;
     
     public User(){
         
@@ -29,9 +29,9 @@ public class User implements Serializable{
     public User(String username,String password){
         this.username = username;
         this.password = password;
-        this.statement = false;
+        this.statement = 0;
     }
-    public User(String username,String password,boolean statement){
+    public User(String username,String password,int statement){
         this.username = username;
         this.password = password;
         this.statement = statement;
@@ -45,7 +45,7 @@ public class User implements Serializable{
         return this.password;
     }
     
-    public boolean getStatement(){
+    public int getStatement(){
         return this.statement;
     }
     
@@ -53,7 +53,7 @@ public class User implements Serializable{
         this.password = password;
     }
     
-    public void setStatment(boolean statement){
+    public void setStatment(int statement){
         this.statement = statement;
     }
     
@@ -67,7 +67,7 @@ public class User implements Serializable{
             while(rs.next()){
                 String username = rs.getString("username");
                 String password = rs.getString("password");
-                boolean statement = Boolean.parseBoolean(rs.getString("statement"));
+                int statement = Integer.parseInt(rs.getString("statement"));
                 users.add(new User(username,password,statement));
             }
             db.disConnect();
@@ -82,12 +82,12 @@ public class User implements Serializable{
     public static User find(String string){
         try {
             Database db = new Database();
-            String query = "SELECT * FROM `users` WHERE `username` = '"+string+"'";
+            String query = "SELECT * FROM users WHERE username = '"+string+"'";
             ResultSet rs = db.query(query);
             rs.next();
             String username = rs.getString("username");
             String password = rs.getString("password");
-            boolean statement = Boolean.parseBoolean(rs.getString("statement"));
+            int statement = Integer.parseInt(rs.getString("statement"));
             db.disConnect();
             return new User(username,password,statement);
         } catch (SQLException ex) {
@@ -99,7 +99,7 @@ public class User implements Serializable{
     public int save(){
         try {
             Database db = new Database();
-            String query = "INSERT INTO `users`(`username`, `password`, `statement`) VALUES ('"+this.getUsername()+"','"+this.password+"',"+this.statement+")";
+            String query = "INSERT INTO users(username, password, statement) VALUES ('"+this.getUsername()+"','"+this.password+"',"+this.statement+")";
             int rs = db.execute(query);
             System.out.println(rs);
             db.disConnect();
@@ -116,7 +116,7 @@ public class User implements Serializable{
     public int update(){
         try {
             Database db = new Database();
-            String query = "UPDATE `users` SET `password`='"+this.getPassword()+"',`statement`="+this.getStatement()+" WHERE `username` = '"+this.getUsername()+"'";
+            String query = "UPDATE users SET password='"+this.getPassword()+"',statement="+this.getStatement()+" WHERE username = '"+this.getUsername()+"'";
             int rs = db.execute(query);
             System.out.println(rs);
             db.disConnect();
@@ -133,7 +133,7 @@ public class User implements Serializable{
     public static int delete(String string){
         try {
             Database db = new Database();
-            String query = "DELETE FROM `users` WHERE `username` = '"+string+"'";
+            String query = "DELETE FROM users WHERE username = '"+string+"'";
             int rs = db.execute(query);
             System.out.println(rs);
             db.disConnect();
